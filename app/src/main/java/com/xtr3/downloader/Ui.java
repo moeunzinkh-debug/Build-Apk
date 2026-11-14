@@ -24,10 +24,14 @@ final class Ui {
     static int dp(Context c, float value) { return Math.round(value * c.getResources().getDisplayMetrics().density); }
     static void insets(Activity activity, View root) {
         root.setOnApplyWindowInsetsListener((v, insets) -> {
-            int types = WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout();
-            if (Build.VERSION.SDK_INT >= 30) types |= WindowInsets.Type.ime();
-            android.graphics.Insets bars = insets.getInsets(types);
-            v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            if (Build.VERSION.SDK_INT >= 30) {
+                int types = WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout() | WindowInsets.Type.ime();
+                android.graphics.Insets bars = insets.getInsets(types);
+                v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            } else {
+                v.setPadding(insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(),
+                        insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom());
+            }
             return insets;
         });
         root.requestApplyInsets();
