@@ -53,9 +53,16 @@ jobs:
           tail -120 gradle-output.log
           if (( code != 0 )); then
             python3 - <<'PY'
-          import re
+          import glob, re, xml.etree.ElementTree as ET
           lines = open('gradle-output.log', encoding='utf-8', errors='replace').read().splitlines()
-          selected = [l for l in lines if re.search(r'error:|FAILED|What went wrong|Execution failed|Caused by:|Could not|requires|Unsupported|not found|Exception', l)]
+          selected = [l for l in lines if re.search(r'error:|Error:|FAILED|What went wrong|Execution failed|Caused by:|Could not|requires|Unsupported|not found|Exception', l)]
+          for path in glob.glob('app/build/test-results/**/TEST-*.xml', recursive=True):
+              try:
+                  for case in ET.parse(path).getroot().iter('testcase'):
+                      for failure in list(case.findall('failure')) + list(case.findall('error')):
+                          selected.append(case.get('classname','') + '.' + case.get('name','') + ': ' + failure.get('message',''))
+              except ET.ParseError:
+                  pass
           if not selected: selected = lines[-30:]
           for line in selected[:40]:
               line = line.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')

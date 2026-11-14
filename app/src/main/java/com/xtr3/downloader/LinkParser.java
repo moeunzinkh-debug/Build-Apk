@@ -16,6 +16,8 @@ public final class LinkParser {
             "<(video|source|meta|a|iframe)\\b([^>]*>)", Pattern.CASE_INSENSITIVE);
     private static final Pattern ATTRIBUTE = Pattern.compile(
             "([a-zA-Z_:][-a-zA-Z0-9_:.]*)\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s\"'=<>`]+))");
+    private static final Pattern LIST_ATTRIBUTE = Pattern.compile(
+            "([a-zA-Z0-9_-]+)\\s*=\\s*(?:\"([^\"]*)\"|([^,]*))");
     private static final Pattern JSON_URL = Pattern.compile(
             "[\"'](?:video_?url|videoUrl|content_?[uU]rl|contentURL|file|src|source|hls|hls_?url|playlist|stream_?url|download_?url|mp4|m3u8)[\"']\\s*:\\s*(?:\"((?:\\\\.|[^\"\\\\])*)\"|'((?:\\\\.|[^'\\\\])*)')",
             Pattern.CASE_INSENSITIVE);
@@ -194,6 +196,17 @@ public final class LinkParser {
         while (m.find()) {
             String value = m.group(2) != null ? m.group(2) : m.group(3) != null ? m.group(3) : m.group(4);
             values.put(m.group(1).toLowerCase(Locale.ROOT), htmlEntities(value));
+        }
+        return values;
+    }
+
+    /** HLS attribute lists are comma-separated; HTML unquoted attribute values may contain commas. */
+    public static Map<String, String> listAttributes(String text) {
+        Map<String, String> values = new LinkedHashMap<>();
+        Matcher m = LIST_ATTRIBUTE.matcher(text);
+        while (m.find()) {
+            String value = m.group(2) != null ? m.group(2) : m.group(3).trim();
+            values.put(m.group(1).toUpperCase(Locale.ROOT), value);
         }
         return values;
     }

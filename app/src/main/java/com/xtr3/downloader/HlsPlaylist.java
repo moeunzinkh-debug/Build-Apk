@@ -59,7 +59,7 @@ public final class HlsPlaylist {
             String line = raw.trim();
             if (line.isEmpty()) continue;
             if (line.startsWith("#EXT-X-STREAM-INF:")) {
-                Map<String, String> a = LinkParser.attributes(line.substring(line.indexOf(':') + 1));
+                Map<String, String> a = LinkParser.listAttributes(line.substring(line.indexOf(':') + 1));
                 pendingVariant = new Variant();
                 pendingVariant.bandwidth = number(a.get("BANDWIDTH"));
                 if (pendingVariant.bandwidth == 0) pendingVariant.bandwidth = number(a.get("AVERAGE-BANDWIDTH"));
@@ -67,7 +67,7 @@ public final class HlsPlaylist {
                 pendingVariant.codecs = a.getOrDefault("CODECS", "");
                 pendingVariant.audioGroup = a.getOrDefault("AUDIO", "");
             } else if (line.startsWith("#EXT-X-MEDIA:")) {
-                Map<String, String> a = LinkParser.attributes(line.substring(line.indexOf(':') + 1));
+                Map<String, String> a = LinkParser.listAttributes(line.substring(line.indexOf(':') + 1));
                 if ("AUDIO".equalsIgnoreCase(a.get("TYPE")) && a.containsKey("URI")) {
                     p.audioRenditions.add(a.getOrDefault("GROUP-ID", ""));
                 }
@@ -77,7 +77,7 @@ public final class HlsPlaylist {
                     if (!"NONE".equals(parsed.method)) key = parsed;
                 } else pendingKey = parsed;
             } else if (line.startsWith("#EXT-X-MAP:")) {
-                Map<String, String> a = LinkParser.attributes(line.substring(line.indexOf(':') + 1));
+                Map<String, String> a = LinkParser.listAttributes(line.substring(line.indexOf(':') + 1));
                 String url = LinkParser.resolve(baseUrl, a.get("URI"));
                 if (url == null) p.unsupported = "The HLS initialization segment is invalid.";
                 if (sawMap && !urlEquals(p.mapUrl, url)) p.unsupported = "HLS with changing initialization segments is not supported.";
@@ -143,7 +143,7 @@ public final class HlsPlaylist {
     }
 
     private static Key parseKey(String attributes, String base) {
-        Map<String, String> a = LinkParser.attributes(attributes);
+        Map<String, String> a = LinkParser.listAttributes(attributes);
         Key k = new Key();
         k.method = a.getOrDefault("METHOD", "NONE").toUpperCase(Locale.ROOT);
         if ("NONE".equals(k.method)) return k;
