@@ -45,7 +45,24 @@ jobs:
         run: node --test tests/detector.test.cjs
 
       - name: Unit tests, lint, and APK build
-        run: ./gradlew --no-daemon --stacktrace testDebugUnitTest lintDebug assembleDebug
+        shell: bash
+        run: |
+          set +e
+          ./gradlew --no-daemon --stacktrace --console=plain testDebugUnitTest lintDebug assembleDebug > gradle-output.log 2>&1
+          code=$?
+          tail -120 gradle-output.log
+          if (( code != 0 )); then
+            python3 - <<'PY'
+          import re
+          lines = open('gradle-output.log', encoding='utf-8', errors='replace').read().splitlines()
+          selected = [l for l in lines if re.search(r'error:|FAILED|What went wrong|Execution failed|Caused by:|Could not|requires|Unsupported|not found|Exception', l)]
+          if not selected: selected = lines[-30:]
+          for line in selected[:40]:
+              line = line.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+              print('::error::' + line[:900])
+          PY
+          fi
+          exit "$code"
 
       - name: Enforce 15 MB limit and name APK
         shell: bash
@@ -87,6 +104,7 @@ jobs:
         with:
           name: Xtr3-test-reports
           path: |
+            gradle-output.log
             app/build/reports/
             app/build/test-results/
           if-no-files-found: ignore

@@ -32,6 +32,7 @@
         <item name="android:background">@drawable/bg_secondary</item>
         <item name="android:textColor">@color/text</item>
     </style>
+    <style name="Text.Xtr3" parent="android:TextAppearance" />
     <style name="Text.Xtr3.Title">
         <item name="android:textColor">@color/text</item>
         <item name="android:textSize">18sp</item>
