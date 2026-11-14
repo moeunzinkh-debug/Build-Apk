@@ -31,7 +31,13 @@ public final class LinkParser {
     private static final Pattern HLS_ANYWHERE = Pattern.compile("(?i)\\.m3u8(?:[?&#]|$)");
     private static final Pattern MEDIA_EXT_ANYWHERE = Pattern.compile("(?i)\\.(mp4|m3u8|webm|m4v|mov|ogv|mkv)(?:[?&#]|$)");
     private static final Pattern MEDIA_HINT = Pattern.compile(
-            "(?i)(?:videoplayback|/hls/|/video/|/stream/|[?&](?:mime|type|format)=video|[?&](?:file|url|src)=[^&]*\\.(?:mp4|m3u8))");
+            "(?i)(?:^|[?&/])videoplayback(?:[?&/]|$)|[?&](?:mime|type|format)=video(?:%2F|/|[&#]|$)|[?&](?:file|url|src|playlist|stream|hls|mp4|m3u8)=[^&#]*\\.(?:mp4|m3u8|webm|m4v|mov)(?:[&#]|$)");
+    private static final Pattern NON_MEDIA_EXT = Pattern.compile(
+            "(?i)\\.(?:apk|html?|json|js|css|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|zip)$");
+    private static final Pattern MEDIA_EXT_PATH = Pattern.compile(
+            "(?i)\\.(?:mp4|m3u8|webm|m4v|mov|ogv|mkv)$");
+    private static final Pattern API_PATH = Pattern.compile(
+            "(?i)/(?:hot_search|detail|chatrooms|unread|rtcoffer|collect|ping)(?:/|$)|/(?:report|notice|chat|user|command)/|/(?:video|api)/(?:url|play|playurl|source|sources|info|detail)(?:/|$)");
 
     private LinkParser() { }
 
@@ -84,6 +90,7 @@ public final class LinkParser {
     }
 
     public static boolean isVideo(String url, String mime) {
+        if (isNonMediaUrl(url)) return false;
         String m = mime == null ? "" : mime.toLowerCase(Locale.ROOT);
         String p = path(url);
         return isHls(url, mime) || p.endsWith(".mp4") || p.endsWith(".webm")
@@ -94,11 +101,21 @@ public final class LinkParser {
 
     /** Broader browser-side heuristic for players that hide the extension in a query string. */
     public static boolean isProbablyMedia(String url, String mime) {
-        return isVideo(url, mime) || hasMediaHint(url);
+        return url != null && !isNonMediaUrl(url) && (isVideo(url, mime) || hasMediaHint(url));
     }
 
     public static boolean hasMediaHint(String url) {
-        return url != null && (MEDIA_EXT_ANYWHERE.matcher(url).find() || MEDIA_HINT.matcher(url).find());
+        return url != null && !isNonMediaUrl(url)
+                && (MEDIA_EXT_ANYWHERE.matcher(url).find() || MEDIA_HINT.matcher(url).find());
+    }
+
+    /** Reject website APIs and obvious non-video files even if a path contains the word "video". */
+    public static boolean isNonMediaUrl(String url) {
+        String p = path(url);
+        if (p.isEmpty()) return false;
+        if (NON_MEDIA_EXT.matcher(p).find()) return true;
+        if (MEDIA_EXT_PATH.matcher(p).find()) return false;
+        return API_PATH.matcher(p).find();
     }
 
     public static boolean isFragment(String url) {

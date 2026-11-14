@@ -16,6 +16,7 @@ import java.util.Locale;
 public final class Diagnostics {
     private static final int MAX_ENTRIES = 900;
     private static final int MAX_ENTRY_LENGTH = 1400;
+    private static final int MAX_LONG_ENTRY_LENGTH = 6000;
     private static final ArrayDeque<String> ENTRIES = new ArrayDeque<>();
     private static final SimpleDateFormat TIME = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US);
     private static volatile boolean enabled;
@@ -54,8 +55,9 @@ public final class Diagnostics {
 
     public static void log(String tag, String message) {
         if (!enabled || message == null) return;
-        String clean = message.replace('\n', ' ').replace('\r', ' ').trim();
-        if (clean.length() > MAX_ENTRY_LENGTH) clean = clean.substring(0, MAX_ENTRY_LENGTH) + "…";
+        String clean = LogSanitizer.redact(message).replace('\n', ' ').replace('\r', ' ').trim();
+        int limit = "TRACE".equals(tag) || "PLAYER".equals(tag) || "SNAP".equals(tag) ? MAX_LONG_ENTRY_LENGTH : MAX_ENTRY_LENGTH;
+        if (clean.length() > limit) clean = clean.substring(0, limit) + "…";
         String line;
         synchronized (TIME) { line = TIME.format(new Date()); }
         line += " [" + tag + "] " + clean;

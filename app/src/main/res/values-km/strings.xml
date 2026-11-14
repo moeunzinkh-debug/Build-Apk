@@ -59,7 +59,8 @@
     <string name="browser_hint">ចុច Play លើទំព័រ។ Xtr3 នឹងបង្ហាញតំណវីដេអូសាធារណៈដែល player ស្នើសុំ។</string>
     <string name="browser_scan">ស្វែងរកម្តងទៀត</string>
     <string name="browser_found">រកឃើញតំណវីដេអូ %1$d</string>
-    <string name="browser_none">កំពុងរង់ចាំតំណវីដេអូ…</string>
+    <string name="browser_none">មិនទាន់មានតំណវីដេអូ។ ចុច Play ក្នុងទំព័រ។ បើវាបង្ហាញ error, ឱ្យចូលគណនី/ប្រើ app ឬ DRM សូមបើក Log។</string>
+    <string name="browser_blocked_app">ទំព័រនេះព្យាយាមទាញយក Android app មិនមែនវីដេអូទេ។ Xtr3 បានរារាំងវា។</string>
     <string name="browser_back">ត្រឡប់</string>
     <string name="browser_reload">ផ្ទុកឡើងវិញ</string>
     <string name="browser_use">ជ្រើសរើសវីដេអូ</string>
@@ -82,7 +83,7 @@
     <string name="developer_remote_on">WebView remote debugging កំពុងបើកសម្រាប់ debug build នេះ។ ប្រើ chrome://inspect/#devices លើកុំព្យូទរ។</string>
     <string name="developer_remote_off">WebView remote debugging កំពុងបិទ។</string>
     <string name="developer_instructions">១) បើកកុងតាក់នេះ។ ២) បើកទំព័រស្វែងរក ហើយចុច Play។ ៣) ត្រឡប់មកទីនេះ ហើយចម្លង/ចែករំលែកកំណត់ហេតុ។ សម្រាប់មើលតាម USB៖ បើក USB debugging លើ Android, ភ្ជាប់ទៅកុំព្យូទ័រ, បើក chrome://inspect/#devices ក្នុង Chrome, inspect Xtr3, ហើយមើល Network/Media។</string>
-    <string name="developer_privacy">កំណត់ហេតុអាចមានតំណវីដេអូ និង token បណ្តោះអាសន្ន។ ចែករំលែកតែជាមួយអ្នកដែលអ្នកទុកចិត្ត។</string>
+    <string name="developer_privacy">កំណត់ហេតុលាក់វាល token/password ទូទៅ ប៉ុន្តែអាចនៅមានអត្ថបទទំព័រ និងតំណវីដេអូ។ ចែករំលែកតែជាមួយអ្នកដែលអ្នកទុកចិត្ត។</string>
     <string name="developer_open_detector">បើកទំព័រស្វែងរក</string>
     <string name="developer_refresh">ផ្ទុកឡើងវិញ</string>
     <string name="developer_clear">សម្អាតកំណត់ហេតុ</string>

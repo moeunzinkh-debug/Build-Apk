@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name" translatable="false">Xtr3</string>
     <string name="example_url" translatable="false">https://xstree.com/vplay/35835513.html</string>
-    <string name="version" translatable="false">Xtr3 1.1.0 · Android 10+</string>
+    <string name="version" translatable="false">Xtr3 1.1.1 · Android 10+</string>
     <string name="tagline">Paste a link. Save the video.</string>
     <string name="tab_new">New download</string>
     <string name="tab_library">My videos</string>
@@ -62,7 +62,8 @@
     <string name="browser_hint">Press Play on the page. Xtr3 will list public video URLs requested by the player.</string>
     <string name="browser_scan">Scan again</string>
     <string name="browser_found">%1$d video link(s) detected</string>
-    <string name="browser_none">Waiting for a video link…</string>
+    <string name="browser_none">No video link yet. Press Play in the page. If it shows an error, login/app-only/DRM message, open Log.</string>
+    <string name="browser_blocked_app">This page tried to download an Android app, not a video. Xtr3 blocked it.</string>
     <string name="browser_back">Back</string>
     <string name="browser_reload">Reload</string>
     <string name="browser_use">Choose video</string>
@@ -85,7 +86,7 @@
     <string name="developer_remote_on">WebView remote debugging is ON for this debug build. Use chrome://inspect/#devices on a computer.</string>
     <string name="developer_remote_off">WebView remote debugging is OFF.</string>
     <string name="developer_instructions">1) Enable the switch. 2) Open the page detector and press Play. 3) Come back here and Copy/Share the log. For USB inspection: enable Android USB debugging, connect to a computer, open chrome://inspect/#devices in Chrome, inspect Xtr3, and watch Network/Media.</string>
-    <string name="developer_privacy">The log can contain media URLs and temporary tokens. Share it only with people you trust.</string>
+    <string name="developer_privacy">Logs redact common token/password fields, but may still contain page text and media URLs. Share only with people you trust.</string>
     <string name="developer_open_detector">Open detector</string>
     <string name="developer_refresh">Refresh</string>
     <string name="developer_clear">Clear log</string>

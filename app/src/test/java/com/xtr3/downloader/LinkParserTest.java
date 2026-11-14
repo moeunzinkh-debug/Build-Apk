@@ -59,6 +59,20 @@ public class LinkParserTest {
         assertTrue(LinkParser.isProbablyMedia("https://cdn.test/api?mime=video/mp4", null));
         assertFalse(LinkParser.isProbablyMedia("https://cdn.test/page.html", "text/html"));
     }
+    @Test public void rejectsXstreeApiAndAppFalsePositives() {
+        String[] urls = {
+                "https://120.76.173.51/video/hot_search?cmd=app",
+                "https://120.76.173.51/video/detail?cmd=app",
+                "https://120.76.173.51/command/rtcOffer?cmd=app",
+                "https://xiaoming.pkcfcf.cn:12581/report/play?cmd=app",
+                "https://xiaoming.pkcfcf.cn:12581/notice/list?cmd=app",
+                "https://120.76.173.51/chat/chatRooms?cmd=app",
+                "https://xstree.com/api/chat/unread?cmd=app",
+                "https://xstree.com/static/app/bigtree.apk",
+                "https://www.google-analytics.com/g/collect?v=2"
+        };
+        for (String url : urls) assertFalse(url, LinkParser.isProbablyMedia(url, null));
+    }
     @Test public void identifiesFragments() {
         assertTrue(LinkParser.isFragment("https://cdn.test/seg001.ts"));
         assertTrue(LinkParser.isFragment("https://cdn.test/seg001.m4s"));

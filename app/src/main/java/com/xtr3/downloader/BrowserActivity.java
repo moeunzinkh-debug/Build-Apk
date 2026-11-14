@@ -100,6 +100,11 @@ public final class BrowserActivity extends Activity {
         web.addJavascriptInterface(new MediaBridge(), "Xtr3Detector");
         web.setDownloadListener((url, userAgent, disposition, mime, size) -> {
             Diagnostics.log("DL", "mime=" + mime + " size=" + size + " url=" + url);
+            if (isAppDownload(url, mime)) {
+                Diagnostics.log("BLOCKED_APK", "The page tried to download an application, not a video: " + url);
+                Ui.toast(this, R.string.browser_blocked_app);
+                return;
+            }
             if (url != null && url.startsWith("http")) add(url, mime, disposition, currentPage, false);
             else Ui.toast(this, R.string.no_media_body);
         });
@@ -109,6 +114,11 @@ public final class BrowserActivity extends Activity {
                 String scheme = uri.getScheme();
                 if (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)) {
                     Diagnostics.log("NAV", "Blocked non-web scheme: " + uri);
+                    return true;
+                }
+                if (request.isForMainFrame() && isAppDownload(uri.toString(), null)) {
+                    Diagnostics.log("BLOCKED_APK", "Blocked main-frame app download: " + uri);
+                    Ui.toast(this, R.string.browser_blocked_app);
                     return true;
                 }
                 if (request.isForMainFrame() && request.getMethod().equals("GET") && detected(uri.toString(), null)) {
@@ -126,8 +136,11 @@ public final class BrowserActivity extends Activity {
                     if (headers != null) range = headers.get("Range");
                     if (range == null && headers != null) range = headers.get("range");
                 } catch (RuntimeException ignored) { }
-                Diagnostics.log("REQ", request.getMethod() + (request.isForMainFrame() ? " main " : " ")
+                String method = request.getMethod() == null ? "GET" : request.getMethod();
+                Diagnostics.log("REQ", method + (request.isForMainFrame() ? " main " : " ")
                         + url + (range == null ? "" : " Range=" + range));
+                // POST/OPTIONS API calls (video/detail, hot_search, rtcOffer, report/play) are not video files.
+                if (!"GET".equalsIgnoreCase(method) && !"HEAD".equalsIgnoreCase(method)) return null;
                 if (detected(url, null)) {
                     Diagnostics.log("HIT", url);
                     add(url, null, null, currentPage, false);
@@ -138,6 +151,10 @@ public final class BrowserActivity extends Activity {
                 if (detected(url, null)) add(url, null, null, currentPage, false);
             }
             @Override public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                if (currentPage != null && !currentPage.equals(url)) {
+                    synchronized (candidates) { candidates.clear(); }
+                    main.post(BrowserActivity.this::updateCount);
+                }
                 currentPage = url;
                 Diagnostics.log("PAGE", "Started " + url);
                 progress.setVisibility(View.VISIBLE);
@@ -185,6 +202,11 @@ public final class BrowserActivity extends Activity {
         });
     }
 
+    private boolean isAppDownload(String url, String mime) {
+        if (url != null && LinkParser.path(url).endsWith(".apk")) return true;
+        String m = mime == null ? "" : mime.toLowerCase(java.util.Locale.ROOT);
+        return m.contains("android.package-archive") || m.equals("application/vnd.android.package-archive");
+    }
     private boolean detected(String url, String mime) {
         if (url == null || url.length() > 8192) return false;
         if (LinkParser.isFragment(url)) return false;
@@ -268,6 +290,10 @@ public final class BrowserActivity extends Activity {
         @JavascriptInterface public void trace(String json) {
             if (json == null || json.length() > 200_000) return;
             Diagnostics.log("TRACE", json);
+        }
+        @JavascriptInterface public void event(String json) {
+            if (json == null || json.length() > 8_000) return;
+            Diagnostics.log("PLAYER", json);
         }
     }
 
