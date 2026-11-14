@@ -118,7 +118,7 @@ public final class BrowserActivity extends Activity {
                 }
                 if (request.isForMainFrame() && isAppDownload(uri.toString(), null)) {
                     Diagnostics.log("BLOCKED_APK", "Blocked main-frame app download: " + uri);
-                    Ui.toast(this, R.string.browser_blocked_app);
+                    Ui.toast(BrowserActivity.this, R.string.browser_blocked_app);
                     return true;
                 }
                 if (request.isForMainFrame() && request.getMethod().equals("GET") && detected(uri.toString(), null)) {
