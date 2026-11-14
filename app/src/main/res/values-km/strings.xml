@@ -93,4 +93,9 @@
     <string name="developer_empty">មិនទាន់មានកំណត់ហេតុ។</string>
     <string name="developer_enabled_toast">បានបើកកំណត់ហេតុអភិវឌ្ឍន៍។</string>
     <string name="browser_log">កំណត់ហេតុ</string>
+    <string name="browser_desktop">Desktop</string>
+    <string name="browser_desktop_on">Desktop ✓</string>
+    <string name="browser_gate_app">គេហទំព័រនេះប្រាប់ថា ចាក់បានតែក្នុង app របស់វាប៉ុណ្ណោះ ហើយមិនផ្ញើតំណវីដេអូឱ្យ browser ទេ។ សាកល្បង Desktop mode; បើនៅតែរារាំង Xtr3 មិនអាចរក្សាទុកទំព័រនេះបានទេ។</string>
+    <string name="browser_gate_drm">Player រាយការណ៍ DRM/ការការពារ។ Xtr3 មិនអាចរក្សាទុក stream ដែលការពារដោយ DRM បានទេ។</string>
+    <string name="browser_gate_login">គេហទំព័រតម្រូវ្យចូលគណនីមុនចាក់។ ចូលគណនីក្នុងទំព័រ រួចស្កេនម្តងទត។</string>
 </resources>

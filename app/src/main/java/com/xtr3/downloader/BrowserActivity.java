@@ -38,14 +38,18 @@ import java.util.Map;
 
 /** A real, user-visible browser fallback for players that create media URLs in JavaScript. */
 public final class BrowserActivity extends Activity {
+    private static final String DESKTOP_UA =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Map<String, MediaCandidate> candidates = new LinkedHashMap<>();
     private WebView web;
     private TextView status;
-    private Button choose, logButton;
+    private Button choose, logButton, desktopButton;
     private ProgressBar progress;
     private String originalUrl;
     private volatile String currentPage;
+    private volatile int gateMessage;
+    private boolean desktopMode;
     private String detectorScript;
     private View customView;
     private WebChromeClient.CustomViewCallback customCallback;
@@ -72,6 +76,10 @@ public final class BrowserActivity extends Activity {
         findViewById(R.id.browser_back).setOnClickListener(v -> back());
         findViewById(R.id.browser_reload).setOnClickListener(v -> { Diagnostics.log("DEV", "Reload"); web.reload(); });
         findViewById(R.id.browser_scan).setOnClickListener(v -> { Diagnostics.log("DEV", "Manual scan"); scan(); });
+        desktopMode = getSharedPreferences("browser", MODE_PRIVATE).getBoolean("desktopMode", false);
+        desktopButton = findViewById(R.id.browser_desktop);
+        desktopButton.setOnClickListener(v -> toggleDesktop());
+        applyDesktopUi();
         logButton.setVisibility(Diagnostics.isEnabled(this) ? View.VISIBLE : View.GONE);
         logButton.setOnClickListener(v -> startActivity(new android.content.Intent(this, DeveloperActivity.class)
                 .putExtra("url", currentPage == null ? originalUrl : currentPage)));
@@ -87,7 +95,12 @@ public final class BrowserActivity extends Activity {
         WebSettings settings = web.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
-        settings.setUserAgentString(HttpMediaClient.USER_AGENT);
+        settings.setUserAgentString(desktopMode ? DESKTOP_UA : HttpMediaClient.USER_AGENT);
+        settings.setUseWideViewPort(desktopMode);
+        settings.setLoadWithOverviewMode(desktopMode);
+        settings.setSupportZoom(true);
+        settings.setBuiltInZoomControls(true);
+        settings.setDisplayZoomControls(false);
         settings.setMediaPlaybackRequiresUserGesture(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setAllowFileAccess(false);
@@ -156,6 +169,7 @@ public final class BrowserActivity extends Activity {
                     main.post(BrowserActivity.this::updateCount);
                 }
                 currentPage = url;
+                gateMessage = 0;
                 Diagnostics.log("PAGE", "Started " + url);
                 progress.setVisibility(View.VISIBLE);
             }
@@ -202,6 +216,26 @@ public final class BrowserActivity extends Activity {
         });
     }
 
+    private void applyDesktopUi() {
+        if (desktopButton == null) return;
+        desktopButton.setText(desktopMode ? R.string.browser_desktop_on : R.string.browser_desktop);
+        desktopButton.setAlpha(desktopMode ? 1f : 0.75f);
+    }
+    private void toggleDesktop() {
+        desktopMode = !desktopMode;
+        getSharedPreferences("browser", MODE_PRIVATE).edit().putBoolean("desktopMode", desktopMode).apply();
+        Diagnostics.log("DEV", "Desktop site mode " + (desktopMode ? "ON" : "OFF"));
+        applyDesktopUi();
+        WebSettings settings = web.getSettings();
+        settings.setUserAgentString(desktopMode ? DESKTOP_UA : HttpMediaClient.USER_AGENT);
+        settings.setUseWideViewPort(desktopMode);
+        settings.setLoadWithOverviewMode(desktopMode);
+        synchronized (candidates) { candidates.clear(); }
+        gateMessage = 0;
+        updateCount();
+        String url = currentPage == null ? originalUrl : currentPage;
+        web.loadUrl(url);
+    }
     private boolean isAppDownload(String url, String mime) {
         if (url != null && LinkParser.path(url).endsWith(".apk")) return true;
         String m = mime == null ? "" : mime.toLowerCase(java.util.Locale.ROOT);
@@ -237,7 +271,9 @@ public final class BrowserActivity extends Activity {
         int count;
         synchronized (candidates) { count = candidates.size(); }
         choose.setEnabled(count > 0);
-        status.setText(count == 0 ? getString(R.string.browser_none) : getString(R.string.browser_found, count));
+        if (count > 0) status.setText(getString(R.string.browser_found, count));
+        else if (gateMessage != 0) status.setText(gateMessage);
+        else status.setText(R.string.browser_none);
     }
     private void scan() {
         if (web != null && detectorScript != null) web.evaluateJavascript(detectorScript, null);
@@ -290,6 +326,19 @@ public final class BrowserActivity extends Activity {
         @JavascriptInterface public void trace(String json) {
             if (json == null || json.length() > 200_000) return;
             Diagnostics.log("TRACE", json);
+            try {
+                JSONObject gate = new JSONObject(json).optJSONObject("gate");
+                if (gate == null) return;
+                int res = 0;
+                if (gate.optBoolean("appOnly")) res = R.string.browser_gate_app;
+                else if (gate.optBoolean("drm")) res = R.string.browser_gate_drm;
+                else if (gate.optBoolean("login")) res = R.string.browser_gate_login;
+                if (res != gateMessage) {
+                    gateMessage = res;
+                    if (res != 0) Diagnostics.log("GATE", gate.optString("message", ""));
+                    main.post(BrowserActivity.this::updateCount);
+                }
+            } catch (org.json.JSONException ignored) { }
         }
         @JavascriptInterface public void event(String json) {
             if (json == null || json.length() > 8_000) return;

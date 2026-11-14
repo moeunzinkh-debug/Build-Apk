@@ -126,6 +126,22 @@ test('records player notice and DRM capability flags without requesting keys', (
   assert.equal(traced.capabilities.drmLevel, 'L3');
 });
 
+test('flags the app-only gate shown by xstree on Android', () => {
+  const {reported, traced} = run({
+    playerNodes: [el('div', {}, {textContent: '请下载APP观看 安卓手机请下载APP观看!'})],
+    bodyText: '第22集 上一集 下一集 请下载APP观看 安卓手机请下载APP观看!'
+  });
+  assert.equal(reported.length, 0);
+  assert.equal(traced.gate.appOnly, true);
+  assert.equal(traced.gate.drm, false);
+  assert.ok(traced.gate.message.includes('APP'));
+});
+
+test('does not flag app-only gate for ordinary upgrade notices', () => {
+  const {traced} = run({bodyText: '浏览器插件请升级到0.1.9！ APP请升级到1.14！'});
+  assert.equal(traced.gate.appOnly, false);
+});
+
 test('caps results to avoid bridge flooding', () => {
   const resources = Array.from({length: 50}, (_, i) => `https://cdn.test/${i}.mp4`);
   assert.equal(run({resources}).reported.length, 24);

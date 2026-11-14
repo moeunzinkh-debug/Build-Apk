@@ -54,13 +54,15 @@ The workflow fails if the APK is larger than **15,000,000 bytes**. The APK is no
 ## Developer mode / ពិនិត្យពេលរកវីដេអូមិនឃើញ
 
 1. In Xtr3, tap **Developer options** and enable the switch.
-2. Tap **Open detector**, load the page, and press Play once.
+2. Tap **Open detector**, load the page, and press Play once. If the site pushes its own app instead of playing (common on Android), tap **Desktop** in the top bar to request the desktop site, then press Play again.
 3. Return to **Developer options** and tap **Copy log** or **Share log**. The log shows page loads, network requests, console messages, detector traces, and detected media URLs.
 4. For deeper inspection: enable Android **USB debugging**, connect the phone to a computer, open `chrome://inspect/#devices` in desktop Chrome, inspect the Xtr3 WebView, and watch the **Network** and **Media** panels while the video plays.
 
 The log is stored only in memory on the phone. Common token/password query fields are redacted, but the log can still contain page text and media URLs, so share it only with someone you trust. Remote debugging is enabled only for debug builds while the switch is on.
 
-The detector ignores website API calls such as `video/detail`, `hot_search`, `rtcOffer`, chat/report endpoints, and APK downloads. Those are not video files. For a page to produce a downloadable candidate, Xtr3 needs to see an actual video element/source, a direct media file, or an HLS playlist. If the page only shows an app-install/login/DRM notice, the log will record that notice instead of offering a fake video link.
+The detector ignores website API calls such as `video/detail`, `hot_search`, `rtcOffer`, chat/report endpoints, and APK downloads. Those are not video files. For a page to produce a downloadable candidate, Xtr3 needs to see an actual video element/source, a direct media file, or an HLS playlist. If the page only shows an app-install/login/DRM notice, the status bar explains that (in English or Khmer) and the log records a `GATE` entry instead of offering a fake video link.
+
+Some sites (including xstree on Android) deliberately refuse to play in a mobile browser and demand their own app. The **Desktop** toggle requests the desktop version of the site, the same way Chrome's "Desktop site" does; if the site still refuses, or if playback requires Widevine/DRM (which Android WebView does not provide), the video cannot be saved by Xtr3 and no detector change will fix that.
 
 ## Limitations
 

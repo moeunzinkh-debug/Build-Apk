@@ -139,6 +139,15 @@
   } catch (e) {}
   walk(document, 0);
   try { if (document.body) trace.bodyText = text(document.body.innerText || document.body.textContent, 1200); } catch (e) {}
+  try {
+    var gateSrc = (trace.playerText || '') + ' ' + (trace.bodyText || '');
+    trace.gate = {
+      appOnly: /请下载\s*APP|下载APP观看|APP观看|请在APP|打开APP|使用APP|install the app|download the app|open in app|get the app/i.test(gateSrc),
+      drm: /Widevine|DRM|版权保护|encrypted playback/i.test(gateSrc),
+      login: /请登录|登录后观看|sign in to watch|log in to watch/i.test(gateSrc),
+      message: trace.playerText || ''
+    };
+  } catch (e) { trace.gate = {appOnly: false, drm: false, login: false, message: ''}; }
   if (window.performance && performance.getEntriesByType) {
     var entries = performance.getEntriesByType('resource');
     trace.resources = entries.length;

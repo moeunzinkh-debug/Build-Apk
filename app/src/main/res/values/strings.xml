@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name" translatable="false">Xtr3</string>
     <string name="example_url" translatable="false">https://xstree.com/vplay/35835513.html</string>
-    <string name="version" translatable="false">Xtr3 1.1.1 · Android 10+</string>
+    <string name="version" translatable="false">Xtr3 1.1.2 · Android 10+</string>
     <string name="tagline">Paste a link. Save the video.</string>
     <string name="tab_new">New download</string>
     <string name="tab_library">My videos</string>
@@ -96,4 +96,9 @@
     <string name="developer_empty">No log entries yet.</string>
     <string name="developer_enabled_toast">Developer logging enabled.</string>
     <string name="browser_log">Log</string>
+    <string name="browser_desktop">Desktop</string>
+    <string name="browser_desktop_on">Desktop ✓</string>
+    <string name="browser_gate_app">This site says: play only in its own app, and it never gives the browser a video URL. Try Desktop mode; if it still blocks, Xtr3 cannot save this page.</string>
+    <string name="browser_gate_drm">The player reports DRM/protected playback. Xtr3 cannot save DRM-protected streams.</string>
+    <string name="browser_gate_login">The site asks you to sign in before playing. Sign in on the page, then scan again.</string>
 </resources>
