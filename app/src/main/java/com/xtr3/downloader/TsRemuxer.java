@@ -53,7 +53,11 @@ public final class TsRemuxer {
                 buffer.clear();
                 int size = extractor.readSampleData(buffer, 0);
                 if (size < 0) { extractor.advance(); continue; }
-                info.set(0, size, extractor.getSampleTime(), extractor.getSampleFlags());
+                int sampleFlags = extractor.getSampleFlags();
+                int bufferFlags = 0;
+                if ((sampleFlags & MediaExtractor.SAMPLE_FLAG_SYNC) != 0) bufferFlags |= MediaCodec.BUFFER_FLAG_KEY_FRAME;
+                if ((sampleFlags & MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME) != 0) bufferFlags |= MediaCodec.BUFFER_FLAG_PARTIAL_FRAME;
+                info.set(0, size, extractor.getSampleTime(), bufferFlags);
                 muxer.writeSampleData(output, buffer, info);
                 extractor.advance();
                 if (++samples % 128 == 0 && cancelled.getAsBoolean()) break;
