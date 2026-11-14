@@ -53,6 +53,9 @@ public class LinkParserTest {
         assertTrue(LinkParser.isHls("https://cdn.test/stream", "application/vnd.apple.mpegurl"));
         assertFalse(LinkParser.isVideo("https://cdn.test/page.html", "text/html"));
     }
+    @Test public void keepsTransportStreamExtension() {
+        assertEquals(".ts", LinkParser.extension("https://cdn.test/video.ts", "video/mp2t"));
+    }
     @Test public void sanitizesPathTraversal() {
         String name = LinkParser.safeFilename("../../a/b:c*?\"<>|");
         assertFalse(name.contains("/"));

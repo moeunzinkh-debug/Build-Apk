@@ -86,6 +86,8 @@ jobs:
           fi
           cp "$source_apk" artifacts/Xtr3.apk
           (cd artifacts && sha256sum Xtr3.apk > Xtr3.apk.sha256)
+          echo "::notice::XTR3_APK_BYTES=$size"
+          echo "::notice::XTR3_APK_SHA256=$(cut -d' ' -f1 artifacts/Xtr3.apk.sha256)"
           {
             echo "## Xtr3 APK"
             echo "- Size: $size bytes ($(( size / 1024 )) KiB)"

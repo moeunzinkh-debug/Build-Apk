@@ -103,6 +103,7 @@ public final class LinkParser {
         if (m.contains("webm") || p.endsWith(".webm")) return ".webm";
         if (m.contains("quicktime") || p.endsWith(".mov")) return ".mov";
         if (m.contains("matroska") || p.endsWith(".mkv")) return ".mkv";
+        if (m.contains("mp2t") || p.endsWith(".ts")) return ".ts";
         if (p.endsWith(".m4v")) return ".m4v";
         if (p.endsWith(".ogv")) return ".ogv";
         return ".mp4";

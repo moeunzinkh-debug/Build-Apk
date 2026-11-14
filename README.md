@@ -1,70 +1,72 @@
 # Xtr3
 
-**Xtr3** គឺជាកម្មវិី Android សម្រាប់ដាក់តំណភ្ជាប់ទំព័រ ឬតំណវីដេអូ រួចស្វែងរក និងទាញយកវីដេអូ។ ឧទាហរណ៍តំណដែលបានដាក់ក្នុងកម្មវិធី៖
+Xtr3 is a small Android app for pasting a page URL or direct video URL, finding the video, and saving it to `Movies/Xtr3`.
+
+Example link included in the app:
 
 `https://xstree.com/vplay/35835512.html`
 
-> សំខាន់៖ តំណឧទាហរណ៍នេះមិនត្រូវបានផ្ទៀងផ្ទាត់ជាមួយគេហទំព័រផ្ទាល់នៅក្នុង sandbox ទេ។ បើទំព័រប្រើ JavaScript, ការចូលគណនី ឬតំណមានអាយុកាលខ្លី សូមប្រើ **Open page detector** ហើយចុច Play ម្តងដើម្បីចាប់តំណវីដេអូថ្មី។ មិនមានការធានាថាគ្រប់វីដេអូលើ xstree.com អាចទាញយកបានទេ។
+> សំខាន់៖ តំណឧទាហរណ៍នេះមិនត្រូវបានផ្ទៀងផ្ទាត់ជាមួយគេហទំព័រផ្ទាល់នៅក្នុង sandbox ទេ។ បើទំព័រប្រើ JavaScript ឬតំណមានអាយុកាលខ្លី សូមប្រើ **Open page detector** ហើយចុច Play ម្តង ដើម្បីចាប់តំណវីដេអូថ្មី។ មិនធានាថាគ្រប់វីដេអូលើ xstree.com អាចទាញយកបានទេ។
 
-## មុខងារ / Features
+## Features
 
-- ភាសាខ្មែរ និងអង់គ្លេស តាមភាសាទូរស័ព្
-- ដាក់ ឬបិទភ្ជាប់តំណទំព័រ / តំណវីដេអូផ្ទាល់
-- ស្វែងរក `<video>`, `<source>`, OpenGraph metadata និងតំណក្នុង JSON/HTML
-- បើកទំព័រក្នុង WebView ដើម្បីចាប់តំណ MP4/WebM/MOV/HLS ដែល player ស្នើសុំ
-- ទាញយកឯកសារវីដេអូផ្ទាល់ និងវីដេអូ HLS VOD ធម្មតា
-- HLS MPEG-TS segments, byte ranges និង AES-128 ដែលមានសោសាធារណៈនៅក្នុង playlist
-- ព្យាយាមបំលែង TS ទៅ MP4 ដោយមិនបាត់បង់គុណភាព ដោយប្រើ Android MediaExtractor/MediaMuxer។ បើឧបករណ៍មិនគាំទ្រ វានឹងរក្សាទុកជា `.ts` ហើយប្រាប់អ្នកឱ្យដឹង
-- Fragmented MP4 HLS ដែលមាន initialization segment តែមួយ
-- ជ្រើសរើសគុណភាពខ្ពស់បំផុតពី HLS master playlist
-- Progress, cancel, retry និងការជូនដំណឹងពេលទាញយកនៅផ្ទៃខាងក្រោយ
-- រក្សាទុកក្នុង `Movies/Xtr3` តាម MediaStore និងបញ្ជីវីដេអូក្នុងកម្មវិី
-- គ្មានពាណិជ្ជកម្ម គ្មាន analytics និងមិនប្រមូលបញ្ជីវីដេអូទៅ server របស់ Xtr3 ទេ
+- Khmer and English UI, following the phone language
+- Paste a page URL or direct video URL
+- Find links in `<video>`, `<source>`, OpenGraph metadata, JSON, and HTML
+- Open the page in a WebView to capture MP4/WebM/MOV/HLS URLs requested by the player
+- Download direct video files and normal HLS VOD streams
+- HLS MPEG-TS segments, byte ranges, and AES-128 with playlist-provided keys
+- Lossless TS-to-MP4 packaging with Android MediaExtractor/MediaMuxer; if the device cannot package MP4, the app keeps the `.ts` file and tells you
+- Fragmented MP4 HLS with a single initialization segment
+- Selects the highest-bandwidth variant from an HLS master playlist
+- Progress, cancel, retry, and background download notification
+- Saves through MediaStore to `Movies/Xtr3` and keeps an in-app video list
+- No ads, no analytics, and no Xtr3 server collecting your video list
 
-## តម្រូវការ / Requirements
+## Requirements
 
-- Android **10 ឬថ្មីជាង** (API 29+)
-- អ៊ីនធឺណិត និងទំហំទំនេរសម្រាប់វីដេអូ
-- ការអនុញ្ញាត Notification ជាជម្រើសសម្រាប់បង្ហាញ progress; មិនត្រូវការសិទ្ធិអាន storage ទាំងមូលទេ
+- Android **10 or newer** (API 29+)
+- Internet connection and free storage for the video
+- Notification permission is optional for progress; no broad storage permission is required
 
-## ទាញយក APK ពី GitHub Actions
+## Download the APK from GitHub Actions
 
-រាល់ការ push ទៅ `main` ឬ `arena/**` និងការបើក **Run workflow** នឹងដំណើរការ workflow **Build Xtr3 APK**។
+Every push to `main` or `arena/**`, and every manual **Run workflow**, runs **Build Xtr3 APK**.
 
-1. បើក repository → **Actions** → **Build Xtr3 APK**។
-2. ជ្រើសរើស run ដែលបានបញ្ចប់ដោយជោគជ័យ។
-3. ក្នុងផ្នែក **Artifacts** ទាញយក **Xtr3-APK**។
-4. ពន្លាឯកសារ ZIP ហើយដំឡើង `Xtr3.apk` លើទូរស័ព្ Android។ អ្នកប្រហែលជាត្រូវអនុញ្ញាតឱ្យកម្មវិីដែលបរើដំើង APK ពីប្រភពមិនស្គាល់។
+1. Open the repository → **Actions** → **Build Xtr3 APK**.
+2. Select a successful run.
+3. In **Artifacts**, download **Xtr3-APK**.
+4. Unzip it and install `Xtr3.apk` on an Android phone. You may need to allow installs from unknown sources for the app used to open the APK.
 
-Workflow បរាជ័យភ្លាមបើ APK លើស **15,000,000 bytes**។ APK មិនត្រូវបានបំពេញទំហំឱ្យដល់ 15 MB ទេ؛ វាត្រូវបានរក្សាឱ្យតូចជាងនេះតាមធមមជាតិ ព្រោះមិនមាន FFmpeg ឬ Python runtime ភ្ជាប់មកជាមួយ។ Artifact មាន `Xtr3.apk.sha256` សម្រាប់ផ្ទៀងផ្ទាត់ឯកសារ និងមានអាយុកាល 14 ថ្ងៃ។
+The workflow fails if the APK is larger than **15,000,000 bytes**. The APK is not padded to reach 15 MB; it stays small because no FFmpeg or Python runtime is bundled. The artifact includes `Xtr3.apk.sha256` for verification and is retained for 14 days.
 
-**ប្រភេទ build៖** workflow build `assembleDebug` ដែលចុះហត្ថលេខាដោយ debug key របស់ runner ដើម្បីឱ្យអាចដំឡើងសាកល្បងបានភ្លាមៗ។ វាមិនមែនជា release សម្រាប់ Play Store ទេ។ Debug key អាចខុសគ្នារវាង run ដូច្នេះការដំឡើងជាន់លើ build ចាស់អាចតម្រូវឱ្យលុប build ចាស់សិន។ សម្រាប់ការចេញផ្សាយជាផ្លូវការ ត្រូវបន្ថែម signing config ដោយប្រើ keystore ឯកជនរបស់អ្នក និងរក្សាទុកវាក្នុង GitHub Secrets មិនមែនក្នុង repository ទេ។
+**Build type:** the workflow builds `assembleDebug`, signed with the runner's debug key so it can be installed for testing immediately. This is not a Play Store release. Debug keys can differ between runs, so installing over an older build may require uninstalling the old build first. For a public release, add your own private signing configuration and store the keystore in GitHub Secrets, not in the repository.
 
-## របៀបប្រើ
+## How to use
 
-1. បើក **Xtr3**។
-2. ចុច **Use example link** ឬបិទភ្ជាប់តំណផ្សេង។
-3. ចុច **Find video**។ បើរកឃើញតំណវីដេអូ ចុច **Download** លើតំណដែលចង់បាន។
-4. បើរកមិនឃើញ ចុច **Open page detector**។ ក្នុងទំព័រដែលបើកឡើង ចុច Play លើវីដេអូម្តង។ ពេលខាងក្រោមបង្ហាញថារកឃើញតំណ ចុច **Choose video** ហើយបញ្ជាក់ការទាញយក។
-5. តាមដាន progress។ ពេលរួចរាល់ ចុច **Open** ឬមើលក្នុង **My videos** / `Movies/Xtr3`។
+1. Open **Xtr3**.
+2. Tap **Use example link** or paste another URL.
+3. Tap **Find video**. If a video link is found, tap **Download** on the one you want.
+4. If nothing is found, tap **Open page detector**. On the page that opens, press Play once. When the bottom bar says a link was detected, tap **Choose video** and confirm the download.
+5. Watch progress. When finished, tap **Open** or find the file in **My videos** / `Movies/Xtr3`.
 
-## ដែនកំណត់ដែលត្រូវដឹង
+## Limitations
 
-- មិនគាំទ្រ DRM/Widevine, SAMPLE-AES, វីដេអូដែលត្រូវការសិទ្ធិពិសេសដែលអ្នកមិនមាន ឬការផ្សាយបន្តផទាល់ (live HLS ដែលគ្មាន `ENDLIST`)។
-- HLS ដែលមាន playlist សំឡេងដាច់ដោយឡែក, initialization segments ច្រើន ឬ discontinuities ក្នុង fragmented MP4 មិនត្រូវបានគាំទ្រកនុងកំណែស្រាលនេះទេ។
-- ការបំលែង TS → MP4 អាស្រ័យលើ codec របស់ឧបករណ៍។ ពេលបំលែងមិនបាន កម្មវិធីរក្សាទុក TS ដែលអាចចាក់ដោយ player ដូចជា VLC ជំនួសវិញ មិនកុហកថាជា MP4 ទេ។
-- គេហទំព័រអាចផ្លាស់ប្តូរ player ឬធ្វើឱ្យតំណផុតកំណត់។ ករណីនោះ ត្រូវបើកទំព័រស្វែងរកតំណថ្មី។
-- សូមទាញយកតែវីដេអូដែលអ្នកជាម្ចាស់ ឬទទួលបានការអនុញ្ញាតឱ្យរក្សាទុក ហើយគោរពលក្ខខណ្ឌរបស់គេហទំព័រ។
+- No DRM/Widevine, SAMPLE-AES, special-access videos you are not authorized to save, or live HLS streams without `ENDLIST`.
+- HLS with separate audio playlists, multiple initialization segments, or fragmented-MP4 discontinuities is not supported in this lightweight build.
+- TS-to-MP4 packaging depends on device codec support. If it fails, the app saves TS instead and does not pretend it is MP4; open it with a player such as VLC.
+- Websites can change their player or expire media URLs. In that case, open the page again and detect a fresh link.
+- Only download videos you own or have permission to save, and respect the website's terms.
 
-## Build ក្នុងម៉ាស៊ីនរបស់អ្នក
+## Build locally
 
-ត្រូវការ JDK 17 និង Android SDK 35។
+Requires JDK 17 and Android SDK 35.
 
 ```bash
 ./gradlew testDebugUnitTest lintDebug assembleDebug
 # Windows: gradlew.bat testDebugUnitTest lintDebug assembleDebug
 ```
 
-លទ្ធផល៖ `app/build/outputs/apk/debug/app-debug.apk`។
+Output: `app/build/outputs/apk/debug/app-debug.apk`.
 
-រចនាសម្ព័ន្ធ៖ Java native Android UI, WebView សម្រាប់ចាប់តំណ, HttpURLConnection សម្រាប់ទាញយក, HLS parser ខ្នាតតូច, MediaStore សម្រាប់រក្សាទុក និង foreground service សម្រាប់ការផ្ទេរដែលអ្នកប្រើបានចាប់ផ្តើម។ Unit tests គ្របដណ្តប់ URL/HTML/HLS parser និង Node tests សម្រាប់ browser detector។ ការសាកល្បងជាមួយគេហទំព័រជាក់លាក់ និងការចាក់វីដេអូពិតត្រូវធ្វើលើឧបករណ៍ Android។
+Architecture: native Java Android UI, WebView for link detection, HttpURLConnection for downloads, a small HLS parser, MediaStore for saving, and a foreground service for user-started transfers. Unit tests cover the URL/HTML/HLS parsers; Node tests cover the browser detector. Real website and video playback checks must be done on an Android device.
