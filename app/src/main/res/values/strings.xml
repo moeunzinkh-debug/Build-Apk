@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">Xtr3</string>
-    <string name="example_url" translatable="false">https://xstree.com/vplay/35835512.html</string>
-    <string name="version" translatable="false">Xtr3 1.0.0 · Android 10+</string>
+    <string name="example_url" translatable="false">https://xstree.com/vplay/35835513.html</string>
+    <string name="version" translatable="false">Xtr3 1.1.0 · Android 10+</string>
     <string name="tagline">Paste a link. Save the video.</string>
     <string name="tab_new">New download</string>
     <string name="tab_library">My videos</string>
@@ -77,4 +77,22 @@
     <string name="stop_analysis">Cancel check</string>
     <string name="analysis_cancelled">Link check cancelled.</string>
     <string name="browser_login_hint">If the site requires an account, sign in on the page first. Xtr3 does not bypass access controls.</string>
+    <string name="developer_options">Developer options</string>
+    <string name="developer_title">Developer mode</string>
+    <string name="developer_switch">Enable logging + WebView debugging</string>
+    <string name="developer_status_on">Logging is ON.</string>
+    <string name="developer_status_off">Logging is OFF.</string>
+    <string name="developer_remote_on">WebView remote debugging is ON for this debug build. Use chrome://inspect/#devices on a computer.</string>
+    <string name="developer_remote_off">WebView remote debugging is OFF.</string>
+    <string name="developer_instructions">1) Enable the switch. 2) Open the page detector and press Play. 3) Come back here and Copy/Share the log. For USB inspection: enable Android USB debugging, connect to a computer, open chrome://inspect/#devices in Chrome, inspect Xtr3, and watch Network/Media.</string>
+    <string name="developer_privacy">The log can contain media URLs and temporary tokens. Share it only with people you trust.</string>
+    <string name="developer_open_detector">Open detector</string>
+    <string name="developer_refresh">Refresh</string>
+    <string name="developer_clear">Clear log</string>
+    <string name="developer_copy">Copy log</string>
+    <string name="developer_share">Share log</string>
+    <string name="developer_copied">Log copied.</string>
+    <string name="developer_empty">No log entries yet.</string>
+    <string name="developer_enabled_toast">Developer logging enabled.</string>
+    <string name="browser_log">Log</string>
 </resources>

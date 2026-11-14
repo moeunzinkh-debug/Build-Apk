@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.ConsoleMessage;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.SslErrorHandler;
@@ -41,7 +42,7 @@ public final class BrowserActivity extends Activity {
     private final Map<String, MediaCandidate> candidates = new LinkedHashMap<>();
     private WebView web;
     private TextView status;
-    private Button choose;
+    private Button choose, logButton;
     private ProgressBar progress;
     private String originalUrl;
     private volatile String currentPage;
@@ -56,18 +57,24 @@ public final class BrowserActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_browser);
         Ui.insets(this, findViewById(R.id.browser_root));
+        Diagnostics.init(this);
         originalUrl = getIntent().getStringExtra("url");
         if (originalUrl == null) { finish(); return; }
         try { originalUrl = LinkParser.normalize(originalUrl); }
         catch (IllegalArgumentException e) { Ui.toast(this, R.string.url_invalid); finish(); return; }
         currentPage = originalUrl;
+        Diagnostics.log("OPEN", originalUrl);
         status = findViewById(R.id.browser_status);
         choose = findViewById(R.id.browser_use);
+        logButton = findViewById(R.id.browser_log);
         progress = findViewById(R.id.browser_progress);
         web = findViewById(R.id.webview);
         findViewById(R.id.browser_back).setOnClickListener(v -> back());
-        findViewById(R.id.browser_reload).setOnClickListener(v -> web.reload());
-        findViewById(R.id.browser_scan).setOnClickListener(v -> scan());
+        findViewById(R.id.browser_reload).setOnClickListener(v -> { Diagnostics.log("DEV", "Reload"); web.reload(); });
+        findViewById(R.id.browser_scan).setOnClickListener(v -> { Diagnostics.log("DEV", "Manual scan"); scan(); });
+        logButton.setVisibility(Diagnostics.isEnabled(this) ? View.VISIBLE : View.GONE);
+        logButton.setOnClickListener(v -> startActivity(new android.content.Intent(this, DeveloperActivity.class)
+                .putExtra("url", currentPage == null ? originalUrl : currentPage)));
         choose.setOnClickListener(v -> chooseCandidate());
         detectorScript = asset("detector.js");
         configure();
@@ -76,6 +83,7 @@ public final class BrowserActivity extends Activity {
     }
 
     private void configure() {
+        Diagnostics.applyWebViewDebugging(this);
         WebSettings settings = web.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -91,44 +99,68 @@ public final class BrowserActivity extends Activity {
         CookieManager.getInstance().setAcceptThirdPartyCookies(web, true);
         web.addJavascriptInterface(new MediaBridge(), "Xtr3Detector");
         web.setDownloadListener((url, userAgent, disposition, mime, size) -> {
-            if (url != null && url.startsWith("http")) add(url, mime, disposition, web.getUrl());
+            Diagnostics.log("DL", "mime=" + mime + " size=" + size + " url=" + url);
+            if (url != null && url.startsWith("http")) add(url, mime, disposition, currentPage, false);
             else Ui.toast(this, R.string.no_media_body);
         });
         web.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 String scheme = uri.getScheme();
-                if (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)) return true;
+                if (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)) {
+                    Diagnostics.log("NAV", "Blocked non-web scheme: " + uri);
+                    return true;
+                }
                 if (request.isForMainFrame() && request.getMethod().equals("GET") && detected(uri.toString(), null)) {
-                    add(uri.toString(), null, null, view.getUrl());
+                    Diagnostics.log("HIT", "Main-frame navigation media: " + uri);
+                    add(uri.toString(), null, null, currentPage, false);
                     return true;
                 }
                 return false;
             }
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
-                if (detected(url, null)) add(url, null, null, currentPage);
+                String range = null;
+                try {
+                    Map<String, String> headers = request.getRequestHeaders();
+                    if (headers != null) range = headers.get("Range");
+                    if (range == null && headers != null) range = headers.get("range");
+                } catch (RuntimeException ignored) { }
+                Diagnostics.log("REQ", request.getMethod() + (request.isForMainFrame() ? " main " : " ")
+                        + url + (range == null ? "" : " Range=" + range));
+                if (detected(url, null)) {
+                    Diagnostics.log("HIT", url);
+                    add(url, null, null, currentPage, false);
+                }
                 return null;
             }
             @Override public void onLoadResource(WebView view, String url) {
-                if (detected(url, null)) add(url, null, null, view.getUrl());
+                if (detected(url, null)) add(url, null, null, currentPage, false);
             }
             @Override public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 currentPage = url;
+                Diagnostics.log("PAGE", "Started " + url);
                 progress.setVisibility(View.VISIBLE);
             }
             @Override public void onPageFinished(WebView view, String url) {
+                currentPage = url;
+                Diagnostics.log("PAGE", "Finished " + url + " title=" + view.getTitle());
                 progress.setVisibility(View.GONE);
                 scan();
                 updateCount();
             }
             @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                Diagnostics.log("ERR", "code=" + error.getErrorCode() + " " + error.getDescription() + " url=" + request.getUrl());
                 if (request.isForMainFrame()) {
                     progress.setVisibility(View.GONE);
                     status.setText(R.string.browser_page_error);
                 }
             }
+            @Override public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
+                Diagnostics.log("HTTP", "status=" + errorResponse.getStatusCode() + " url=" + request.getUrl());
+            }
             @Override public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+                Diagnostics.log("SSL", error.toString());
                 handler.cancel();
                 progress.setVisibility(View.GONE);
                 status.setText(R.string.browser_ssl_error);
@@ -136,6 +168,11 @@ public final class BrowserActivity extends Activity {
         });
         web.setWebChromeClient(new WebChromeClient() {
             @Override public void onProgressChanged(WebView view, int newProgress) { progress.setProgress(newProgress); }
+            @Override public boolean onConsoleMessage(ConsoleMessage message) {
+                Diagnostics.log("CONSOLE", message.messageLevel() + " " + message.message()
+                        + " (" + message.sourceId() + ":" + message.lineNumber() + ")");
+                return true;
+            }
             @Override public void onShowCustomView(View view, CustomViewCallback callback) {
                 if (customView != null) { callback.onCustomViewHidden(); return; }
                 customView = view;
@@ -150,15 +187,19 @@ public final class BrowserActivity extends Activity {
 
     private boolean detected(String url, String mime) {
         if (url == null || url.length() > 8192) return false;
+        if (LinkParser.isFragment(url)) return false;
         String path = LinkParser.path(url);
-        // Individual HLS transport fragments are not downloadable videos.
-        if (path.endsWith(".ts") || path.endsWith(".m4s") || path.endsWith(".aac")) return false;
-        return LinkParser.isVideo(url, mime);
+        if (path.endsWith(".mpd")) {
+            Diagnostics.log("DASH", "MPEG-DASH manifest detected but this build downloads HLS/direct only: " + url);
+            return false;
+        }
+        return LinkParser.isProbablyMedia(url, mime);
     }
-    private void add(String url, String mime, String title, String page) {
-        if (!detected(url, mime)) return;
+    private void add(String url, String mime, String title, String page, boolean trustedVideo) {
+        if (!trustedVideo && !detected(url, mime)) return;
         String normalized;
         try { normalized = LinkParser.normalize(url); } catch (IllegalArgumentException e) { return; }
+        if (LinkParser.isFragment(normalized) || LinkParser.path(normalized).endsWith(".mpd")) return;
         synchronized (candidates) {
             if (candidates.containsKey(normalized) || candidates.size() >= 24) return;
             MediaCandidate c = new MediaCandidate(normalized, page == null ? originalUrl : page,
@@ -166,6 +207,7 @@ public final class BrowserActivity extends Activity {
                     LinkParser.isHls(normalized, mime) ? MediaCandidate.HLS : MediaCandidate.DIRECT);
             c.mime = mime;
             candidates.put(normalized, c);
+            Diagnostics.log("MEDIA", (trustedVideo ? "video-element " : "network ") + c.kind + " " + normalized);
         }
         main.post(this::updateCount);
     }
@@ -181,6 +223,7 @@ public final class BrowserActivity extends Activity {
     private void chooseCandidate() {
         List<MediaCandidate> list;
         synchronized (candidates) { list = new ArrayList<>(candidates.values()); }
+        Diagnostics.log("DEV", "Choose video; candidates=" + list.size());
         if (list.isEmpty()) { Ui.toast(this, R.string.browser_none); return; }
         if (list.size() == 1) { returnCandidate(list.get(0)); return; }
         String[] labels = new String[list.size()];
@@ -198,6 +241,7 @@ public final class BrowserActivity extends Activity {
     private void returnCandidate(MediaCandidate c) {
         CookieManager.getInstance().flush();
         if (c.title == null || c.title.equals("Video")) c.title = LinkParser.cleanTitle(web.getTitle());
+        Diagnostics.log("DEV", "Selected " + c.kind + " " + c.url);
         setResult(RESULT_OK, new android.content.Intent().putExtra("candidate", c));
         finish();
     }
@@ -207,15 +251,23 @@ public final class BrowserActivity extends Activity {
             if (json == null || json.length() > 200_000) return;
             try {
                 JSONArray array = new JSONArray(json);
-                String page = originalUrl;
+                Diagnostics.log("JS", "Detector reported " + array.length() + " candidate(s)");
+                String page = currentPage == null ? originalUrl : currentPage;
                 for (int i = 0; i < Math.min(array.length(), 24); i++) {
                     JSONObject o = array.optJSONObject(i);
                     if (o == null) continue;
                     String url = o.optString("url", "");
-                    String mime = "hls".equals(o.optString("kind")) ? "application/vnd.apple.mpegurl" : null;
-                    add(url, mime, o.optString("title", "Video"), page);
+                    String kind = o.optString("kind", "");
+                    String mime = "hls".equals(kind) || LinkParser.isHls(url, null) ? "application/vnd.apple.mpegurl" : null;
+                    add(url, mime, o.optString("title", "Video"), page, "video".equals(kind));
                 }
-            } catch (org.json.JSONException | RuntimeException ignored) { }
+            } catch (org.json.JSONException | RuntimeException e) {
+                Diagnostics.log("JS", "Invalid detector report: " + e);
+            }
+        }
+        @JavascriptInterface public void trace(String json) {
+            if (json == null || json.length() > 200_000) return;
+            Diagnostics.log("TRACE", json);
         }
     }
 
@@ -243,6 +295,8 @@ public final class BrowserActivity extends Activity {
     @Override public void onBackPressed() { back(); }
     @Override protected void onResume() {
         super.onResume();
+        Diagnostics.applyWebViewDebugging(this);
+        if (logButton != null) logButton.setVisibility(Diagnostics.isEnabled(this) ? View.VISIBLE : View.GONE);
         if (web != null) { web.onResume(); web.resumeTimers(); main.postDelayed(poll, 1500); }
     }
     @Override protected void onPause() {

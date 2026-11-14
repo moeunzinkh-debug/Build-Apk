@@ -49,6 +49,7 @@
                 <Button android:id="@+id/example_button" style="@style/Widget.Xtr3.Button.Secondary" android:layout_width="match_parent" android:layout_height="44dp" android:layout_marginTop="8dp" android:text="@string/use_example" android:textSize="13sp" />
                 <Button android:id="@+id/analyze_button" style="@style/Widget.Xtr3.Button" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="@string/analyze" />
                 <Button android:id="@+id/browser_button" style="@style/Widget.Xtr3.Button.Secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="@string/open_browser" />
+                <Button android:id="@+id/developer_button" style="@style/Widget.Xtr3.Button.Secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="@string/developer_options" android:textSize="13sp" />
             </LinearLayout>
             <TextView android:id="@+id/status_text" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginTop="18dp" android:text="@string/ready" style="@style/Text.Xtr3.Body" android:accessibilityLiveRegion="polite" />

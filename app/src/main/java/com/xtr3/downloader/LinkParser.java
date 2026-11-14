@@ -28,6 +28,10 @@ public final class LinkParser {
             Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     private static final Pattern MEDIA_KEY = Pattern.compile(
             "(?:video|content|file|src|source|hls|playlist|stream|download|mp4|m3u8)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern HLS_ANYWHERE = Pattern.compile("(?i)\\.m3u8(?:[?&#]|$)");
+    private static final Pattern MEDIA_EXT_ANYWHERE = Pattern.compile("(?i)\\.(mp4|m3u8|webm|m4v|mov|ogv|mkv)(?:[?&#]|$)");
+    private static final Pattern MEDIA_HINT = Pattern.compile(
+            "(?i)(?:videoplayback|/hls/|/video/|/stream/|[?&](?:mime|type|format)=video|[?&](?:file|url|src)=[^&]*\\.(?:mp4|m3u8))");
 
     private LinkParser() { }
 
@@ -75,7 +79,8 @@ public final class LinkParser {
 
     public static boolean isHls(String url, String mime) {
         String m = mime == null ? "" : mime.toLowerCase(Locale.ROOT);
-        return path(url).endsWith(".m3u8") || m.contains("mpegurl") || m.contains("vnd.apple.mpegurl");
+        return path(url).endsWith(".m3u8") || (url != null && HLS_ANYWHERE.matcher(url).find())
+                || m.contains("mpegurl") || m.contains("vnd.apple.mpegurl");
     }
 
     public static boolean isVideo(String url, String mime) {
@@ -85,6 +90,20 @@ public final class LinkParser {
                 || p.endsWith(".m4v") || p.endsWith(".mov") || p.endsWith(".ogv")
                 || p.endsWith(".mkv") || p.endsWith(".ts")
                 || (m.startsWith("video/") && !m.contains("mpegurl"));
+    }
+
+    /** Broader browser-side heuristic for players that hide the extension in a query string. */
+    public static boolean isProbablyMedia(String url, String mime) {
+        return isVideo(url, mime) || hasMediaHint(url);
+    }
+
+    public static boolean hasMediaHint(String url) {
+        return url != null && (MEDIA_EXT_ANYWHERE.matcher(url).find() || MEDIA_HINT.matcher(url).find());
+    }
+
+    public static boolean isFragment(String url) {
+        String p = path(url);
+        return p.endsWith(".ts") || p.endsWith(".m4s") || p.endsWith(".aac");
     }
 
     public static String path(String url) {

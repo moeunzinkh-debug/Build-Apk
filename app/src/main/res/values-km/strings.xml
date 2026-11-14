@@ -74,4 +74,22 @@
     <string name="stop_analysis">បោះបង់ការពិនិត្យ</string>
     <string name="analysis_cancelled">បានបោះបង់ការពិនិត្យតំណ។</string>
     <string name="browser_login_hint">បើគេហទំព័រតម្រូវឱ្យមានគណនី សូមចូលគណនីលើទំព័រជាមុនសិន។ Xtr3 មិនឆ្លងកាត់ការការពារសិទ្ធិចូលប្រើទេ។</string>
+    <string name="developer_options">ជម្រើសអភិវឌ្ឍន៍</string>
+    <string name="developer_title">របៀបអភិវឌ្ឍន</string>
+    <string name="developer_switch">បើកកំណត់ហេតុ + WebView debugging</string>
+    <string name="developer_status_on">កំពុងកត់ត្រា។</string>
+    <string name="developer_status_off">មិនកត់ត្រា។</string>
+    <string name="developer_remote_on">WebView remote debugging កំពុងបើកសម្រាប់ debug build នេះ។ ប្រើ chrome://inspect/#devices លើកុំព្យូទរ។</string>
+    <string name="developer_remote_off">WebView remote debugging កំពុងបិទ។</string>
+    <string name="developer_instructions">១) បើកកុងតាក់នេះ។ ២) បើកទំព័រស្វែងរក ហើយចុច Play។ ៣) ត្រឡប់មកទីនេះ ហើយចម្លង/ចែករំលែកកំណត់ហេតុ។ សម្រាប់មើលតាម USB៖ បើក USB debugging លើ Android, ភ្ជាប់ទៅកុំព្យូទ័រ, បើក chrome://inspect/#devices ក្នុង Chrome, inspect Xtr3, ហើយមើល Network/Media។</string>
+    <string name="developer_privacy">កំណត់ហេតុអាចមានតំណវីដេអូ និង token បណ្តោះអាសន្ន។ ចែករំលែកតែជាមួយអ្នកដែលអ្នកទុកចិត្ត។</string>
+    <string name="developer_open_detector">បើកទំព័រស្វែងរក</string>
+    <string name="developer_refresh">ផ្ទុកឡើងវិញ</string>
+    <string name="developer_clear">សម្អាតកំណត់ហេតុ</string>
+    <string name="developer_copy">ចម្លងកំណត់ហេតុ</string>
+    <string name="developer_share">ចែករំលែកកំណត់ហេតុ</string>
+    <string name="developer_copied">បានចម្លងកំណត់ហេតុ។</string>
+    <string name="developer_empty">មិនទាន់មានកំណត់ហេតុ។</string>
+    <string name="developer_enabled_toast">បានបើកកំណត់ហេតុអភិវឌ្ឍន៍។</string>
+    <string name="browser_log">កំណត់ហេតុ</string>
 </resources>

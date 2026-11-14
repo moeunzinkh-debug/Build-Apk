@@ -54,6 +54,7 @@ public final class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Ui.insets(this, findViewById(R.id.root_scroll));
+        Diagnostics.init(this);
         input = findViewById(R.id.url_input);
         status = findViewById(R.id.status_text);
         analysisProgress = findViewById(R.id.analysis_progress);
@@ -76,6 +77,8 @@ public final class MainActivity extends Activity {
         libraryTab.setOnClickListener(v -> showTab(false));
         analyzeButton.setOnClickListener(v -> { if (busy) cancelAnalysis(); else analyze(); });
         findViewById(R.id.browser_button).setOnClickListener(v -> openBrowser());
+        findViewById(R.id.developer_button).setOnClickListener(v ->
+                startActivity(new Intent(this, DeveloperActivity.class).putExtra("url", input.getText().toString())));
         findViewById(R.id.clear_button).setOnClickListener(v -> {
             cancelAnalysis(); input.setText(""); results.removeAllViews(); status.setText(R.string.ready);
         });

@@ -53,6 +53,17 @@ public class LinkParserTest {
         assertTrue(LinkParser.isHls("https://cdn.test/stream", "application/vnd.apple.mpegurl"));
         assertFalse(LinkParser.isVideo("https://cdn.test/page.html", "text/html"));
     }
+    @Test public void detectsQueryHlsAndBrowserHints() {
+        assertTrue(LinkParser.isHls("https://cdn.test/play?file=master.m3u8", null));
+        assertTrue(LinkParser.isProbablyMedia("https://cdn.test/videoplayback?id=1", null));
+        assertTrue(LinkParser.isProbablyMedia("https://cdn.test/api?mime=video/mp4", null));
+        assertFalse(LinkParser.isProbablyMedia("https://cdn.test/page.html", "text/html"));
+    }
+    @Test public void identifiesFragments() {
+        assertTrue(LinkParser.isFragment("https://cdn.test/seg001.ts"));
+        assertTrue(LinkParser.isFragment("https://cdn.test/seg001.m4s"));
+        assertFalse(LinkParser.isFragment("https://cdn.test/master.m3u8"));
+    }
     @Test public void keepsTransportStreamExtension() {
         assertEquals(".ts", LinkParser.extension("https://cdn.test/video.ts", "video/mp2t"));
     }

@@ -18,8 +18,9 @@
         <TextView android:id="@+id/browser_status" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="@string/browser_none" style="@style/Text.Xtr3.Body" android:accessibilityLiveRegion="polite" />
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="10dp">
-            <Button android:id="@+id/browser_scan" style="@style/Widget.Xtr3.Button.Secondary" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/browser_scan" />
-            <Button android:id="@+id/browser_use" style="@style/Widget.Xtr3.Button" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:text="@string/browser_use" android:enabled="false" />
+            <Button android:id="@+id/browser_scan" style="@style/Widget.Xtr3.Button.Secondary" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/browser_scan" android:textSize="12sp" />
+            <Button android:id="@+id/browser_log" style="@style/Widget.Xtr3.Button.Secondary" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="@string/browser_log" android:textSize="12sp" android:visibility="gone" />
+            <Button android:id="@+id/browser_use" style="@style/Widget.Xtr3.Button" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="@string/browser_use" android:textSize="12sp" android:enabled="false" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

@@ -4,9 +4,9 @@ Xtr3 is a small Android app for pasting a page URL or direct video URL, finding 
 
 Example link included in the app:
 
-`https://xstree.com/vplay/35835512.html`
+`https://xstree.com/vplay/35835513.html`
 
-> សំខាន់៖ តំណឧទាហរណ៍នេះមិនត្រូវបានផ្ទៀងផ្ទាត់ជាមួយគេហទំព័រផ្ទាល់នៅក្នុង sandbox ទេ។ បើទំព័រប្រើ JavaScript ឬតំណមានអាយុកាលខ្លី សូមប្រើ **Open page detector** ហើយចុច Play ម្តង ដើម្បីចាប់តំណវីដេអូថ្មី។ មិនធានាថាគ្រប់វីដេអូលើ xstree.com អាចទាញយកបានទេ។
+> សំខាន់៖ ទំព័រឧទាហរណ៍នេះជា JavaScript shell; HTML ដំបូងបង្ហាញតែ “加载中” (កំពុងផ្ទុក)។ ដូច្នេះ **Find video** ធម្មតាអាចមិនឃើញ player ទេ។ សូមប្រើ **Open page detector** ហើយចុច Play ម្តង។ បើនៅតែមិនឃើញ បើក **Developer options** ដើម្បីកត់ត្រា request ហើយផ្ញើ log មកពិនិត្យ។ មិនធានាថាគ្រប់វីដេអូលើ xstree.com អាចទាញយកបានទេ។
 
 ## Features
 
@@ -22,6 +22,7 @@ Example link included in the app:
 - Progress, cancel, retry, and background download notification
 - Saves through MediaStore to `Movies/Xtr3` and keeps an in-app video list
 - No ads, no analytics, and no Xtr3 server collecting your video list
+- Opt-in Developer mode: request/console log, copy/share log, and WebView remote debugging for `chrome://inspect`
 
 ## Requirements
 
@@ -49,6 +50,15 @@ The workflow fails if the APK is larger than **15,000,000 bytes**. The APK is no
 3. Tap **Find video**. If a video link is found, tap **Download** on the one you want.
 4. If nothing is found, tap **Open page detector**. On the page that opens, press Play once. When the bottom bar says a link was detected, tap **Choose video** and confirm the download.
 5. Watch progress. When finished, tap **Open** or find the file in **My videos** / `Movies/Xtr3`.
+
+## Developer mode / ពិនិត្យពេលរកវីដេអូមិនឃើញ
+
+1. In Xtr3, tap **Developer options** and enable the switch.
+2. Tap **Open detector**, load the page, and press Play once.
+3. Return to **Developer options** and tap **Copy log** or **Share log**. The log shows page loads, network requests, console messages, detector traces, and detected media URLs.
+4. For deeper inspection: enable Android **USB debugging**, connect the phone to a computer, open `chrome://inspect/#devices` in desktop Chrome, inspect the Xtr3 WebView, and watch the **Network** and **Media** panels while the video plays.
+
+The log is stored only in memory on the phone. It can contain media URLs and temporary tokens, so share it only with someone you trust. Remote debugging is enabled only for debug builds while the switch is on.
 
 ## Limitations
 

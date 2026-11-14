@@ -17,7 +17,7 @@ function run({elements = [], resources = [], scripts = [], base = 'https://xstre
   const window = {Xtr3Detector: {report: json => { reported = JSON.parse(json); }}};
   const performance = {getEntriesByType: () => resources.map(name => ({name}))};
   window.performance = performance;
-  vm.runInNewContext(script, {document, window, performance, URL});
+  vm.runInNewContext(script, {document, window, performance, URL, location: {href: base}});
   return reported;
 }
 
@@ -25,7 +25,7 @@ test('detects a currentSrc from a playing video', () => {
   const result = run({elements: [{tagName: 'VIDEO', currentSrc: 'https://cdn.test/movie.mp4?token=1'}]});
   assert.equal(result.length, 1);
   assert.equal(result[0].url, 'https://cdn.test/movie.mp4?token=1');
-  assert.equal(result[0].kind, 'direct');
+  assert.equal(result[0].kind, 'video');
 });
 
 test('detects HLS from network resources and ignores transport fragments', () => {
@@ -52,6 +52,12 @@ test('ignores blob URLs and deduplicates', () => {
 test('resolves relative source URLs', () => {
   const result = run({elements: [{tagName: 'SOURCE', src: '../media/a.mp4'}]});
   assert.equal(result[0].url, 'https://xstree.com/media/a.mp4');
+});
+
+test('detects HLS hidden in a query parameter', () => {
+  const result = run({resources: ['https://cdn.test/play?file=master.m3u8']});
+  assert.equal(result.length, 1);
+  assert.equal(result[0].kind, 'hls');
 });
 
 test('caps results to avoid bridge flooding', () => {
