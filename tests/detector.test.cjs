@@ -15,7 +15,7 @@ function el(tagName, attrs = {}, props = {}) {
 }
 
 function run({elements = [], all = [], playerNodes = [], resources = [], scripts = [], bodyText = '', base = 'https://xstree.com/vplay/35835513.html', windowProps = {}} = {}) {
-  let reported = [], traced = null, events = [];
+  let reported = [], traced = null, events = [], playback = [];
   const document = {
     baseURI: base,
     title: 'Test video',
@@ -32,7 +32,8 @@ function run({elements = [], all = [], playerNodes = [], resources = [], scripts
   const bridge = {
     report: json => { reported = JSON.parse(json); },
     trace: json => { traced = JSON.parse(json); },
-    event: json => { events.push(JSON.parse(json)); }
+    event: json => { events.push(JSON.parse(json)); },
+    playback: json => { playback.push(JSON.parse(json)); }
   };
   const window = Object.assign({Xtr3Detector: bridge, navigator: {}}, windowProps);
   const performance = {getEntriesByType: () => resources.map(name => ({name}))};
@@ -41,7 +42,7 @@ function run({elements = [], all = [], playerNodes = [], resources = [], scripts
     document, window, performance, URL, location: {href: base},
     WeakSet, Set, Map, navigator: window.navigator
   });
-  return {reported, traced, events};
+  return {reported, traced, events, playback};
 }
 
 test('detects a currentSrc from a playing video', () => {
@@ -140,6 +141,20 @@ test('flags the app-only gate shown by xstree on Android', () => {
 test('does not flag app-only gate for ordinary upgrade notices', () => {
   const {traced} = run({bodyText: '浏览器插件请升级到0.1.9！ APP请升级到1.14！'});
   assert.equal(traced.gate.appOnly, false);
+});
+
+test('merges passively observed media MIME URLs and reports buffer transport', () => {
+  const playbackState = {buffered: true, peer: false, protected: false, playing: true, appends: 3};
+  const {reported, traced, playback} = run({windowProps: {__xtr3Observer: {
+    collect: () => [{url: 'https://cdn.test/playlist?id=9', kind: 'hls', mime: 'application/vnd.apple.mpegurl'},
+      {url: 'https://cdn.test/movie?id=8', kind: 'video', mime: 'video/mp4'}],
+    snapshot: () => playbackState
+  }}});
+  assert.equal(reported.length, 2);
+  assert.equal(reported[0].kind, 'hls');
+  assert.equal(reported[1].mime, 'video/mp4');
+  assert.equal(traced.playback.buffered, true);
+  assert.equal(playback[0].appends, 3);
 });
 
 test('caps results to avoid bridge flooding', () => {

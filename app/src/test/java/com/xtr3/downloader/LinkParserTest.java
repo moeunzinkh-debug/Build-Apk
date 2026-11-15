@@ -5,11 +5,11 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class LinkParserTest {
-    private static final String PAGE = "https://xstree.com/vplay/35835512.html";
+    private static final String PAGE = "https://xstree.com/vplay/35835513.html";
 
     @Test public void normalizesExample() {
         assertEquals(PAGE, LinkParser.normalize("  " + PAGE + "  "));
-        assertEquals(PAGE, LinkParser.normalize("xstree.com/vplay/35835512.html"));
+        assertEquals(PAGE, LinkParser.normalize("xstree.com/vplay/35835513.html"));
     }
     @Test(expected = IllegalArgumentException.class) public void rejectsJavascript() {
         LinkParser.normalize("javascript:alert(1)");
@@ -58,6 +58,14 @@ public class LinkParserTest {
         assertTrue(LinkParser.isProbablyMedia("https://cdn.test/videoplayback?id=1", null));
         assertTrue(LinkParser.isProbablyMedia("https://cdn.test/api?mime=video/mp4", null));
         assertFalse(LinkParser.isProbablyMedia("https://cdn.test/page.html", "text/html"));
+    }
+    @Test public void acceptsObservedMediaMimeWithoutFileExtension() {
+        assertTrue(LinkParser.isProbablyMedia("https://cdn.test/movie?id=8", "video/mp4"));
+        assertTrue(LinkParser.isProbablyMedia("https://cdn.test/playlist?id=9", "application/vnd.apple.mpegurl"));
+        assertFalse(LinkParser.isProbablyMedia("https://120.76.173.51/video/detail?cmd=app", "application/json"));
+        assertFalse(LinkParser.isProbablyMedia("https://cdn.test/seg.ts", "video/mp2t"));
+        assertFalse(LinkParser.isProbablyMedia("https://cdn.test/videoplayback?id=1", "application/json"));
+        assertFalse(LinkParser.isProbablyMedia("https://cdn.test/movie.mp4", "text/html"));
     }
     @Test public void rejectsXstreeApiAndAppFalsePositives() {
         String[] urls = {

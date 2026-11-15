@@ -64,6 +64,10 @@
     <string name="browser_back">ត្រឡប់</string>
     <string name="browser_reload">ផ្ទុកឡើងវិញ</string>
     <string name="browser_use">ជ្រើសរើសវីដេអូ</string>
+    <string name="browser_no_link">គ្មានតំណវីដេអូ</string>
+    <string name="browser_buffered">Player នេះប្រើ buffer របស់ browser (blob/MSE)។ មិនទាន់រកឃើញឯកសារ ឬ playlist ដែលអាចទាញយកបានទេ។</string>
+    <string name="browser_peer">វីដេអូកំពុងមកតាមការតភ្ជាប់ peer (WebRTC)។ មិនមានតំណវីដេអូពេញលេញសម្រាប់ជ្រើសរើសទេ។</string>
+    <string name="browser_protected">Player រាយការណ៍ថាវីដេអូមានការការពារ/DRM។ Xtr3 មិនអាចរក្សាទុក stream ដែលបានការពារទេ។</string>
     <string name="browser_loading">កំពុងផ្ទុកទំព័រ…</string>
     <string name="browser_ssl_error">វិញ្ញាបនបត្រសុវត្ថិភាពរបស់គេហទំព័រមិនត្រឹមត្រូវទេ។ បានបញ្ឈប់ការផ្ទុក។</string>
     <string name="browser_page_error">មិនអាចផ្ទុកទំព័របានទេ។ ពិនិត្យតំណ ឬការតភ្ជាប់អីនធឺណិត។</string>

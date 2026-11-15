@@ -25,6 +25,9 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import androidx.webkit.WebViewCompat;
+import androidx.webkit.WebViewFeature;
+import androidx.webkit.ScriptHandler;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
@@ -32,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +54,10 @@ public final class BrowserActivity extends Activity {
     private volatile String currentPage;
     private volatile int gateMessage;
     private boolean desktopMode;
-    private String detectorScript;
+    private String detectorScript, observerScript;
+    private ScriptHandler observerHandle;
+    private volatile boolean bufferedPlayback, peerPlayback, protectedPlayback;
+    private volatile boolean destroyed;
     private View customView;
     private WebChromeClient.CustomViewCallback customCallback;
     private final Runnable poll = new Runnable() {
@@ -85,7 +92,10 @@ public final class BrowserActivity extends Activity {
                 .putExtra("url", currentPage == null ? originalUrl : currentPage)));
         choose.setOnClickListener(v -> chooseCandidate());
         detectorScript = asset("detector.js");
+        observerScript = asset("observer.js");
         configure();
+        Diagnostics.log("APP", getString(R.string.version) + "; desktop=" + desktopMode
+                + "; frameObserver=" + (observerHandle != null));
         status.setText(R.string.browser_loading);
         web.loadUrl(originalUrl);
     }
@@ -111,6 +121,7 @@ public final class BrowserActivity extends Activity {
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(web, true);
         web.addJavascriptInterface(new MediaBridge(), "Xtr3Detector");
+        installObserver();
         web.setDownloadListener((url, userAgent, disposition, mime, size) -> {
             Diagnostics.log("DL", "mime=" + mime + " size=" + size + " url=" + url);
             if (isAppDownload(url, mime)) {
@@ -150,8 +161,8 @@ public final class BrowserActivity extends Activity {
                     if (range == null && headers != null) range = headers.get("range");
                 } catch (RuntimeException ignored) { }
                 String method = request.getMethod() == null ? "GET" : request.getMethod();
-                Diagnostics.log("REQ", method + (request.isForMainFrame() ? " main " : " ")
-                        + url + (range == null ? "" : " Range=" + range));
+                Diagnostics.logChanged("REQ:" + method + ":" + url, "REQ", method
+                        + (request.isForMainFrame() ? " main " : " ") + url + (range == null ? "" : " Range=" + range));
                 // POST/OPTIONS API calls (video/detail, hot_search, rtcOffer, report/play) are not video files.
                 if (!"GET".equalsIgnoreCase(method) && !"HEAD".equalsIgnoreCase(method)) return null;
                 if (detected(url, null)) {
@@ -163,17 +174,18 @@ public final class BrowserActivity extends Activity {
             @Override public void onLoadResource(WebView view, String url) {
                 if (detected(url, null)) add(url, null, null, currentPage, false);
             }
-            @Override public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                if (currentPage != null && !currentPage.equals(url)) {
-                    synchronized (candidates) { candidates.clear(); }
-                    main.post(BrowserActivity.this::updateCount);
-                }
+            @Override public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
+                if (!isReload && currentPage != null && !currentPage.equals(url)) resetDetection();
                 currentPage = url;
-                gateMessage = 0;
+            }
+            @Override public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                currentPage = url;
+                resetDetection();
                 Diagnostics.log("PAGE", "Started " + url);
                 progress.setVisibility(View.VISIBLE);
             }
             @Override public void onPageFinished(WebView view, String url) {
+                if (currentPage != null && !currentPage.equals(url)) resetDetection();
                 currentPage = url;
                 Diagnostics.log("PAGE", "Finished " + url + " title=" + view.getTitle());
                 progress.setVisibility(View.GONE);
@@ -216,6 +228,22 @@ public final class BrowserActivity extends Activity {
         });
     }
 
+    private void installObserver() {
+        if (observerScript == null || observerScript.isEmpty()) return;
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+            try {
+                // Player frames may be cross-origin. This passive observer runs only while the
+                // user-initiated detector is open; every bridge payload is validated in Java.
+                // It never receives request bodies, authorization headers, cookies, or DRM keys.
+                observerHandle = WebViewCompat.addDocumentStartJavaScript(web, observerScript,
+                        Collections.singleton("*"));
+            } catch (RuntimeException e) {
+                Diagnostics.log("DEV", "Frame observer unavailable: " + e.getClass().getSimpleName());
+            }
+        }
+        if (observerHandle == null) Diagnostics.log("DEV", "Document-start frame observer unsupported; main-frame scan only");
+    }
+
     private void applyDesktopUi() {
         if (desktopButton == null) return;
         desktopButton.setText(desktopMode ? R.string.browser_desktop_on : R.string.browser_desktop);
@@ -230,9 +258,7 @@ public final class BrowserActivity extends Activity {
         settings.setUserAgentString(desktopMode ? DESKTOP_UA : HttpMediaClient.USER_AGENT);
         settings.setUseWideViewPort(desktopMode);
         settings.setLoadWithOverviewMode(desktopMode);
-        synchronized (candidates) { candidates.clear(); }
-        gateMessage = 0;
-        updateCount();
+        resetDetection();
         String url = currentPage == null ? originalUrl : currentPage;
         web.loadUrl(url);
     }
@@ -267,22 +293,43 @@ public final class BrowserActivity extends Activity {
         }
         main.post(this::updateCount);
     }
+    private void resetDetection() {
+        synchronized (candidates) { candidates.clear(); }
+        gateMessage = 0;
+        bufferedPlayback = false;
+        peerPlayback = false;
+        protectedPlayback = false;
+        main.post(this::updateCount);
+    }
     private void updateCount() {
+        if (destroyed || choose == null || status == null) return;
         int count;
         synchronized (candidates) { count = candidates.size(); }
         choose.setEnabled(count > 0);
+        choose.setAlpha(count > 0 ? 1f : 0.45f);
+        choose.setText(count > 0 ? R.string.browser_use : R.string.browser_no_link);
         if (count > 0) status.setText(getString(R.string.browser_found, count));
+        else if (protectedPlayback) status.setText(R.string.browser_protected);
+        else if (peerPlayback) status.setText(R.string.browser_peer);
+        else if (bufferedPlayback) status.setText(R.string.browser_buffered);
         else if (gateMessage != 0) status.setText(gateMessage);
         else status.setText(R.string.browser_none);
     }
     private void scan() {
-        if (web != null && detectorScript != null) web.evaluateJavascript(detectorScript, null);
+        if (web != null && detectorScript != null) {
+            // Also installs a main-frame fallback on older WebView versions.
+            web.evaluateJavascript(observerScript + "\n" + detectorScript, null);
+        }
     }
     private void chooseCandidate() {
         List<MediaCandidate> list;
         synchronized (candidates) { list = new ArrayList<>(candidates.values()); }
         Diagnostics.log("DEV", "Choose video; candidates=" + list.size());
-        if (list.isEmpty()) { Ui.toast(this, R.string.browser_none); return; }
+        if (list.isEmpty()) {
+            Ui.toast(this, protectedPlayback ? R.string.browser_protected : peerPlayback ? R.string.browser_peer
+                    : bufferedPlayback ? R.string.browser_buffered : R.string.browser_none);
+            return;
+        }
         if (list.size() == 1) { returnCandidate(list.get(0)); return; }
         String[] labels = new String[list.size()];
         for (int i = 0; i < list.size(); i++) {
@@ -309,25 +356,60 @@ public final class BrowserActivity extends Activity {
             if (json == null || json.length() > 200_000) return;
             try {
                 JSONArray array = new JSONArray(json);
-                Diagnostics.log("JS", "Detector reported " + array.length() + " candidate(s)");
                 String page = currentPage == null ? originalUrl : currentPage;
+                Diagnostics.logChanged("JS:" + page, "JS", "Detector reported " + array.length() + " candidate(s)");
                 for (int i = 0; i < Math.min(array.length(), 24); i++) {
                     JSONObject o = array.optJSONObject(i);
                     if (o == null) continue;
                     String url = o.optString("url", "");
                     String kind = o.optString("kind", "");
-                    String mime = "hls".equals(kind) || LinkParser.isHls(url, null) ? "application/vnd.apple.mpegurl" : null;
-                    add(url, mime, o.optString("title", "Video"), page, "video".equals(kind));
+                    String observedMime = o.optString("mime", "");
+                    if (observedMime.length() > 200) observedMime = "";
+                    String mime = "hls".equals(kind) || LinkParser.isHls(url, null) ? "application/vnd.apple.mpegurl"
+                            : observedMime.isEmpty() ? null : observedMime;
+                    boolean trustedElement = "video".equals(kind) && observedMime.isEmpty();
+                    add(url, mime, o.optString("title", "Video"), page, trustedElement);
                 }
             } catch (org.json.JSONException | RuntimeException e) {
                 Diagnostics.log("JS", "Invalid detector report: " + e);
             }
         }
+        @JavascriptInterface public void network(String json) {
+            if (json == null || json.length() > 12_000) return;
+            try {
+                JSONObject o = new JSONObject(json);
+                String url = LinkParser.normalize(o.optString("url", ""));
+                String mime = o.optString("mime", "");
+                if (mime.length() > 200) return;
+                if (mime.isEmpty()) mime = null;
+                if (!detected(url, mime)) return;
+                String source = o.optString("source", "player");
+                Diagnostics.log("PLAYER_NET", ("fetch".equals(source) || "xhr".equals(source) ? source : "player") + " " + url);
+                add(url, mime, null, currentPage, false);
+            } catch (org.json.JSONException | RuntimeException e) {
+                Diagnostics.log("JS", "Rejected invalid player network report");
+            }
+        }
+        @JavascriptInterface public void playback(String json) {
+            if (json == null || json.length() > 20_000) return;
+            try {
+                JSONObject o = new JSONObject(json);
+                bufferedPlayback |= o.optBoolean("buffered");
+                peerPlayback |= o.optBoolean("peer");
+                protectedPlayback |= o.optBoolean("protected");
+                String signature = o.optString("href") + o.optBoolean("playing") + o.optBoolean("buffered")
+                        + o.optBoolean("peer") + o.optBoolean("protected") + o.optJSONArray("sourceBuffers")
+                        + o.optJSONArray("blobs");
+                Diagnostics.logChanged("PLAYBACK:" + o.optString("href"), "PLAYBACK", json, signature);
+                main.post(BrowserActivity.this::updateCount);
+            } catch (org.json.JSONException ignored) { }
+        }
         @JavascriptInterface public void trace(String json) {
             if (json == null || json.length() > 200_000) return;
-            Diagnostics.log("TRACE", json);
             try {
-                JSONObject gate = new JSONObject(json).optJSONObject("gate");
+                JSONObject root = new JSONObject(json);
+                Diagnostics.logChanged("TRACE", "TRACE", json, traceSignature(root));
+                JSONObject gate = root.optJSONObject("gate");
                 if (gate == null) return;
                 int res = 0;
                 if (gate.optBoolean("appOnly")) res = R.string.browser_gate_app;
@@ -344,6 +426,20 @@ public final class BrowserActivity extends Activity {
             if (json == null || json.length() > 8_000) return;
             Diagnostics.log("PLAYER", json);
         }
+    }
+
+    private static String traceSignature(JSONObject root) throws org.json.JSONException {
+        JSONObject summary = new JSONObject(root.toString());
+        summary.remove("bodyText");
+        summary.remove("resources");
+        summary.remove("scriptUrls");
+        summary.remove("playback");
+        JSONArray videos = summary.optJSONArray("videos");
+        if (videos != null) for (int i = 0; i < videos.length(); i++) {
+            JSONObject video = videos.optJSONObject(i);
+            if (video != null) video.remove("currentTime");
+        }
+        return summary.toString();
     }
 
     private String asset(String name) {
@@ -381,8 +477,10 @@ public final class BrowserActivity extends Activity {
         super.onPause();
     }
     @Override protected void onDestroy() {
+        destroyed = true;
         main.removeCallbacksAndMessages(null);
         hideCustomView();
+        if (observerHandle != null) { observerHandle.remove(); observerHandle = null; }
         if (web != null) {
             web.removeJavascriptInterface("Xtr3Detector");
             web.stopLoading();

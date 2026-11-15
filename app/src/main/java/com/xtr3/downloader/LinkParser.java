@@ -101,7 +101,18 @@ public final class LinkParser {
 
     /** Broader browser-side heuristic for players that hide the extension in a query string. */
     public static boolean isProbablyMedia(String url, String mime) {
-        return url != null && !isNonMediaUrl(url) && (isVideo(url, mime) || hasMediaHint(url));
+        if (url == null || isNonMediaUrl(url)) return false;
+        if (isHls(url, mime)) return true;
+        if (isKnownNonMediaMime(mime)) return false;
+        return isVideo(url, mime) || hasMediaHint(url);
+    }
+
+    public static boolean isKnownNonMediaMime(String mime) {
+        String m = mime == null ? "" : mime.toLowerCase(Locale.ROOT).split(";", 2)[0].trim();
+        return m.startsWith("text/") || m.startsWith("image/") || m.startsWith("audio/")
+                || m.equals("application/json") || m.endsWith("+json") || m.equals("application/javascript")
+                || m.equals("application/xml") || m.endsWith("+xml") || m.equals("application/pdf")
+                || m.equals("application/zip") || m.contains("android.package-archive");
     }
 
     public static boolean hasMediaHint(String url) {

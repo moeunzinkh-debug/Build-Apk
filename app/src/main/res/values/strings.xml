@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name" translatable="false">Xtr3</string>
     <string name="example_url" translatable="false">https://xstree.com/vplay/35835513.html</string>
-    <string name="version" translatable="false">Xtr3 1.1.2 · Android 10+</string>
+    <string name="version" translatable="false">Xtr3 1.1.3 · Android 10+</string>
     <string name="tagline">Paste a link. Save the video.</string>
     <string name="tab_new">New download</string>
     <string name="tab_library">My videos</string>
@@ -67,6 +67,10 @@
     <string name="browser_back">Back</string>
     <string name="browser_reload">Reload</string>
     <string name="browser_use">Choose video</string>
+    <string name="browser_no_link">No video link</string>
+    <string name="browser_buffered">This player uses a browser buffer (blob/MSE). No downloadable file or playlist has been found yet.</string>
+    <string name="browser_peer">Video is arriving through a peer connection (WebRTC). There is no complete video URL to choose.</string>
+    <string name="browser_protected">This player reports protected/DRM media. Xtr3 cannot save protected streams.</string>
     <string name="browser_loading">Loading page…</string>
     <string name="browser_ssl_error">The site\'s security certificate failed validation. Loading was stopped.</string>
     <string name="browser_page_error">The page could not be loaded. Check the link or your connection.</string>

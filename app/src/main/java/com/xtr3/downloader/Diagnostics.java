@@ -10,6 +10,7 @@ import android.webkit.WebView;
 import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 
 /** Opt-in developer log. It never logs Cookie/Authorization header values. */
@@ -18,6 +19,7 @@ public final class Diagnostics {
     private static final int MAX_ENTRY_LENGTH = 1400;
     private static final int MAX_LONG_ENTRY_LENGTH = 6000;
     private static final ArrayDeque<String> ENTRIES = new ArrayDeque<>();
+    private static final LinkedHashMap<String, Integer> LAST = new LinkedHashMap<>();
     private static final SimpleDateFormat TIME = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US);
     private static volatile boolean enabled;
     private static volatile boolean loaded;
@@ -56,7 +58,8 @@ public final class Diagnostics {
     public static void log(String tag, String message) {
         if (!enabled || message == null) return;
         String clean = LogSanitizer.redact(message).replace('\n', ' ').replace('\r', ' ').trim();
-        int limit = "TRACE".equals(tag) || "PLAYER".equals(tag) || "SNAP".equals(tag) ? MAX_LONG_ENTRY_LENGTH : MAX_ENTRY_LENGTH;
+        int limit = "TRACE".equals(tag) || "PLAYER".equals(tag) || "PLAYBACK".equals(tag) || "SNAP".equals(tag)
+                ? MAX_LONG_ENTRY_LENGTH : MAX_ENTRY_LENGTH;
         if (clean.length() > limit) clean = clean.substring(0, limit) + "…";
         String line;
         synchronized (TIME) { line = TIME.format(new Date()); }
@@ -65,6 +68,20 @@ public final class Diagnostics {
             ENTRIES.addLast(line);
             while (ENTRIES.size() > MAX_ENTRIES) ENTRIES.removeFirst();
         }
+    }
+
+    /** Suppress repeated polling messages so player errors and media hits stay in the ring buffer. */
+    public static void logChanged(String key, String tag, String message) {
+        logChanged(key, tag, message, message);
+    }
+    public static synchronized void logChanged(String key, String tag, String message, String signature) {
+        if (!enabled || message == null || signature == null) return;
+        int hash = signature.hashCode();
+        Integer previous = LAST.get(key);
+        if (previous != null && previous == hash) return;
+        LAST.put(key, hash);
+        while (LAST.size() > 128) LAST.remove(LAST.keySet().iterator().next());
+        log(tag, message);
     }
 
     public static String text() {
@@ -77,7 +94,10 @@ public final class Diagnostics {
     }
 
     public static int count() { synchronized (ENTRIES) { return ENTRIES.size(); } }
-    public static void clear() { synchronized (ENTRIES) { ENTRIES.clear(); } }
+    public static synchronized void clear() {
+        synchronized (ENTRIES) { ENTRIES.clear(); }
+        LAST.clear();
+    }
 
     public static void copy(Context context) {
         ClipboardManager clipboard = context.getSystemService(ClipboardManager.class);

@@ -40,6 +40,16 @@
       found.push({url: url, kind: hlsExt.test(url) ? 'hls' : (kind === 'video' ? 'video' : 'direct'), title: title || document.title || 'Video'});
     } catch (e) {}
   }
+  function addObserved(item) {
+    try {
+      if (!item || found.length >= 24 || typeof item.url !== 'string') return;
+      var url = new URL(item.url, document.baseURI).href;
+      if (!/^https?:/i.test(url) || seen[url] || fragmentExt.test(url) || nonMediaExt.test(url) || isApi(url)) return;
+      if (item.kind !== 'hls' && item.kind !== 'video') return;
+      seen[url] = true;
+      found.push({url: url, kind: item.kind, mime: String(item.mime || ''), title: document.title || 'Video'});
+    } catch (e) {}
+  }
   function unescape(value) {
     try { return JSON.parse('"' + value.replace(/"/g, '\\"') + '"'); } catch (e) { return value.replace(/\\\//g, '/'); }
   }
@@ -137,10 +147,17 @@
       try { trace.capabilities.hevc = window.MediaSource.isTypeSupported('video/mp4;codecs="hvc1.1.6.L120.90"'); } catch (e) {}
     }
   } catch (e) {}
+  try {
+    if (window.__xtr3Observer) {
+      var observed = window.__xtr3Observer.collect();
+      for (var oi = 0; oi < observed.length; oi++) addObserved(observed[oi]);
+      trace.playback = window.__xtr3Observer.snapshot();
+    }
+  } catch (e) {}
   walk(document, 0);
   try { if (document.body) trace.bodyText = text(document.body.innerText || document.body.textContent, 1200); } catch (e) {}
   try {
-    var gateSrc = (trace.playerText || '') + ' ' + (trace.bodyText || '');
+    var gateSrc = trace.playerText || trace.bodyText || '';
     trace.gate = {
       appOnly: /请下载\s*APP|下载APP观看|APP观看|请在APP|打开APP|使用APP|install the app|download the app|open in app|get the app/i.test(gateSrc),
       drm: /Widevine|DRM|版权保护|encrypted playback/i.test(gateSrc),
@@ -169,6 +186,7 @@
     while ((m = bare.exec(scriptText)) !== null) add(unescape(m[0]), 'json');
   }
   if (window.Xtr3Detector) {
+    if (trace.playback && window.Xtr3Detector.playback) window.Xtr3Detector.playback(JSON.stringify(trace.playback));
     if (window.Xtr3Detector.trace) window.Xtr3Detector.trace(JSON.stringify(trace));
     if (window.Xtr3Detector.report) window.Xtr3Detector.report(JSON.stringify(found));
   }
