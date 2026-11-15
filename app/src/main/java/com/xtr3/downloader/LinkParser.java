@@ -101,7 +101,9 @@ public final class LinkParser {
 
     /** Broader browser-side heuristic for players that hide the extension in a query string. */
     public static boolean isProbablyMedia(String url, String mime) {
-        if (url == null || isNonMediaUrl(url)) return false;
+        if (url == null || isNonMediaUrl(url) || isFragment(url)) return false;
+        String m = mime == null ? "" : mime.toLowerCase(Locale.ROOT).split(";", 2)[0].trim();
+        if (m.equals("video/mp2t")) return false;
         if (isHls(url, mime)) return true;
         if (isKnownNonMediaMime(mime)) return false;
         return isVideo(url, mime) || hasMediaHint(url);
