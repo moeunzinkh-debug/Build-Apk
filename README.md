@@ -2,7 +2,7 @@
 
 Xtr3 is a small Android app for pasting a page URL or direct video URL, finding the video, and saving it to `Movies/Xtr3`.
 
-Current test build: **1.3.0** — adds site-aware downloading for public, non-DRM **Bilibili/B23, Facebook, YouTube, TikTok and TikTok drama episode** links using bundled yt-dlp 2026.10.26, Python, QuickJS, yt-dlp-ejs and FFmpeg. It keeps the Cronet/Media3 engine from 1.2.0 for ordinary pages/direct/HLS links, verifies downloaded bytes, and plays saved videos in-app. The APK is larger because it bundles real extraction/merge/playback engines, not padding. It does not read browser cookies or bypass DRM, paid memberships, login-only/private videos, or live streams.
+Current test build: **1.3.1** — adds site-aware downloading for public, non-DRM **Bilibili/B23, Facebook, YouTube, TikTok and TikTok drama episode** links using bundled yt-dlp 2026.10.26, Python, QuickJS, yt-dlp-ejs and FFmpeg. It keeps the Cronet/Media3 engine from 1.2.0 for ordinary pages/direct/HLS links, verifies downloaded bytes, and plays saved videos in-app. Since 1.3.1 the workflow builds a minified **release** and splits it into one APK per CPU ABI (arm64-v8a, armeabi-v7a, x86_64), so a phone installs only the native engines it can run instead of one ~167 MB universal file. The weight is real extraction/merge/playback engine code, not padding. It does not read browser cookies or bypass DRM, paid memberships, login-only/private videos, or live streams.
 
 Example link included in the app:
 
@@ -45,12 +45,12 @@ Every push to `main` or `arena/**`, and every manual **Run workflow**, runs **Bu
 
 1. Open the repository → **Actions** → **Build Xtr3 APK**.
 2. Select a successful run.
-3. In **Artifacts**, download **Xtr3-APK**.
-4. Unzip it and install `Xtr3.apk` on an Android phone. You may need to allow installs from unknown sources for the app used to open the APK.
+3. In **Artifacts**, download the APK for your phone's ABI: **Xtr3-APK-arm64-v8a** for most modern phones, **Xtr3-APK-armeabi-v7a** for older 32-bit ARM phones, or **Xtr3-APK-x86_64** for emulators / x86 tablets.
+4. Unzip it and install the `Xtr3-<abi>.apk` inside on an Android phone. You may need to allow installs from unknown sources for the app used to open the APK.
 
-The workflow fails if the APK is larger than **250,000,000 bytes**. Since 1.3.0 the APK is intentionally larger because it bundles Cronet, Media3/ExoPlayer, yt-dlp/Python/QuickJS/EJS and FFmpeg for arm64-v8a, armeabi-v7a and x86_64; it is not padded with useless bytes. The artifact includes `Xtr3.apk.sha256` for verification and is retained for 14 days.
+The workflow fails if any single per-ABI APK is larger than **120,000,000 bytes**. Each split APK still bundles Cronet, Media3/ExoPlayer and yt-dlp/Python/QuickJS/EJS/FFmpeg for exactly one ABI; it is not padded with useless bytes. Each artifact includes a matching `.apk.sha256` for verification and is retained for 14 days.
 
-**Build type:** the workflow builds `assembleDebug`, signed with the runner's debug key so it can be installed for testing immediately. This is not a Play Store release. Debug keys can differ between runs, so installing over an older build may require uninstalling the old build first. For a public release, add your own private signing configuration and store the keystore in GitHub Secrets, not in the repository.
+**Build type:** the workflow builds `assembleRelease` (minified, resource-shrunk, non-debuggable) and signs it with a throwaway self-signed key generated inside the run, so the APK installs immediately without storing any private key in this public repository. This is not a Play Store release. The CI key is regenerated per run, so installing over an older CI build may require uninstalling the old build first. For a public / stable-upgrade release, add your own private signing configuration and store the keystore in GitHub Secrets, not in the repository.
 
 ## How to use
 

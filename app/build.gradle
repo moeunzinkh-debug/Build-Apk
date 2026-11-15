@@ -10,10 +10,37 @@ android {
         applicationId 'com.xtr3.downloader'
         minSdk 29
         targetSdk 35
-        versionCode 9
-        versionName '1.3.0'
+        versionCode 10
+        versionName '1.3.1'
         resourceConfigurations += ['en', 'km']
         ndk { abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64' }
+    }
+
+    // One installable APK per CPU architecture so a phone downloads only the
+    // native engines it can actually run (Python/QuickJS/FFmpeg/Cronet). This is
+    // what keeps a single installed APK near ~50-65 MB instead of ~167 MB.
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'arm64-v8a', 'armeabi-v7a', 'x86_64'
+            universalApk false
+        }
+    }
+
+    signingConfigs {
+        // CI passes a throwaway self-signed keystore via -Pandroid.injected.signing.*.
+        // Locally (no properties) we fall back to the debug key so assembleRelease
+        // still produces an installable APK. Never commit a real keystore here.
+        ciRelease {
+            def storePath = providers.gradleProperty('android.injected.signing.store.file').orNull
+            if (storePath != null) {
+                storeFile file(storePath)
+                storePassword providers.gradleProperty('android.injected.signing.store.password').orNull
+                keyAlias providers.gradleProperty('android.injected.signing.key.alias').orNull
+                keyPassword providers.gradleProperty('android.injected.signing.key.password').orNull
+            }
+        }
     }
 
     buildTypes {
@@ -23,11 +50,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         release {
-            // The workflow produces an installable, debug-signed test APK.
-            // Add your own private signing configuration before publishing a release.
+            // Minified, resource-shrunk, non-debuggable release. The workflow signs it
+            // with a CI-generated self-signed key (injected signing properties). For a
+            // Play Store / stable-upgrade release, supply your own private keystore.
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig(signingConfigs.ciRelease.storeFile != null ? signingConfigs.ciRelease : signingConfigs.debug)
         }
     }
     compileOptions {

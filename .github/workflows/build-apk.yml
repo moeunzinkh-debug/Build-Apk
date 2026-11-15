@@ -44,11 +44,29 @@ jobs:
       - name: Test browser detector and source observer
         run: node --test tests/*.cjs
 
-      - name: Unit tests, lint, and APK build
+      - name: Generate a throwaway release signing key
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Self-signed CI key so assembleRelease yields an installable APK without
+          # storing any private key in this public repository. It is regenerated per
+          # run, so upgrading over an older CI build may require uninstalling first.
+          keytool -genkeypair -v -keystore ci-release.keystore -alias xtr3 \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass xtr3-ci-release -keypass xtr3-ci-release \
+            -dname "CN=Xtr3 CI, OU=Test, O=Xtr3, L=Phnom Penh, C=KH"
+
+      - name: Unit tests, lint, and release APK build
         shell: bash
         run: |
           set +e
-          ./gradlew --no-daemon --stacktrace --console=plain testDebugUnitTest lintDebug assembleDebug > gradle-output.log 2>&1
+          ./gradlew --no-daemon --stacktrace --console=plain \
+            testDebugUnitTest lintDebug assembleRelease \
+            -Pandroid.injected.signing.store.file="$PWD/ci-release.keystore" \
+            -Pandroid.injected.signing.store.password=xtr3-ci-release \
+            -Pandroid.injected.signing.key.alias=xtr3 \
+            -Pandroid.injected.signing.key.password=xtr3-ci-release \
+            > gradle-output.log 2>&1
           code=$?
           tail -120 gradle-output.log
           if (( code != 0 )); then
@@ -71,38 +89,77 @@ jobs:
           fi
           exit "$code"
 
-      - name: Enforce 250 MB limit and name APK
+      - name: Enforce per-APK limit and name split release APKs
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p artifacts
-          source_apk="app/build/outputs/apk/debug/app-debug.apk"
-          test -s "$source_apk"
-          size=$(stat -c%s "$source_apk")
-          limit=250000000
-          if (( size > limit )); then
-            echo "::error::Xtr3.apk is $size bytes; the limit is $limit bytes."
+          limit=120000000
+          shopt -s nullglob
+          apks=(app/build/outputs/apk/release/*-release.apk)
+          if (( ${#apks[@]} == 0 )); then
+            echo "::error::No release APKs were produced."
             exit 1
           fi
-          cp "$source_apk" artifacts/Xtr3.apk
-          (cd artifacts && sha256sum Xtr3.apk > Xtr3.apk.sha256)
-          echo "::notice::XTR3_APK_BYTES=$size"
-          echo "::notice::XTR3_APK_SHA256=$(cut -d' ' -f1 artifacts/Xtr3.apk.sha256)"
           {
-            echo "## Xtr3 APK"
-            echo "- Size: $size bytes ($(( size / 1024 )) KiB)"
-            echo "- Limit: $limit bytes (250 MB)"
-            echo "- Build: debug-signed, installable test APK"
-            echo "- Download: the **Xtr3-APK** artifact below"
+            echo "## Xtr3 release APKs (one per ABI)"
+            echo "Install only the file that matches your phone. Most modern phones use **arm64-v8a**."
+            echo ""
+            echo "| ABI | Size (bytes) | Size (MB) | SHA-256 |"
+            echo "| --- | --- | --- | --- |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for apk in "${apks[@]}"; do
+            base=$(basename "$apk" .apk)             # app-arm64-v8a-release
+            abi=${base#app-}; abi=${abi%-release}     # arm64-v8a
+            size=$(stat -c%s "$apk")
+            if (( size > limit )); then
+              echo "::error::$abi APK is $size bytes; the per-APK limit is $limit bytes."
+              exit 1
+            fi
+            out="artifacts/Xtr3-${abi}.apk"
+            cp "$apk" "$out"
+            (cd artifacts && sha256sum "Xtr3-${abi}.apk" > "Xtr3-${abi}.apk.sha256")
+            sha=$(cut -d' ' -f1 "artifacts/Xtr3-${abi}.apk.sha256")
+            echo "::notice::XTR3_APK_${abi}_BYTES=$size"
+            echo "::notice::XTR3_APK_${abi}_SHA256=$sha"
+            echo "| $abi | $size | $(( size / 1000000 )) | \`$sha\` |" >> "$GITHUB_STEP_SUMMARY"
+          done
+          {
+            echo ""
+            echo "- Build: minified **release**, self-signed CI test key (not Play Store)."
+            echo "- Per-APK limit: $limit bytes (120 MB)."
+            echo "- Download the artifact for your ABI below (arm64-v8a for most phones)."
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload Xtr3 APK
+      - name: Upload Xtr3 APK (arm64-v8a)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: Xtr3-APK
+          name: Xtr3-APK-arm64-v8a
           path: |
-            artifacts/Xtr3.apk
-            artifacts/Xtr3.apk.sha256
+            artifacts/Xtr3-arm64-v8a.apk
+            artifacts/Xtr3-arm64-v8a.apk.sha256
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Upload Xtr3 APK (armeabi-v7a)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: Xtr3-APK-armeabi-v7a
+          path: |
+            artifacts/Xtr3-armeabi-v7a.apk
+            artifacts/Xtr3-armeabi-v7a.apk.sha256
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Upload Xtr3 APK (x86_64)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: Xtr3-APK-x86_64
+          path: |
+            artifacts/Xtr3-x86_64.apk
+            artifacts/Xtr3-x86_64.apk.sha256
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
