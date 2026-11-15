@@ -117,4 +117,11 @@
     <string name="browser_gate_app">គេហទំព័រនេះប្រាប់ថា ចាក់បានតែក្នុង app របស់វាប៉ុណ្ណោះ ហើយមិនផ្ញើតំណវីដេអូឱ្យ browser ទេ។ សាកល្បង Desktop mode; បើនៅតែរារាំង Xtr3 មិនអាចរក្សាទុកទំព័រនេះបានទេ។</string>
     <string name="browser_gate_drm">Player រាយការណ៍ DRM/ការការពារ។ Xtr3 មិនអាចរក្សាទុក stream ដែលការពារដោយ DRM បានទេ។</string>
     <string name="browser_gate_login">គេហទំព័រតម្រូវឱ្យចូលគណនីមុនចាក់។ ចូលគណនីក្នុងទំព័រ រួចចុច Grab source ម្តងទៀត។</string>
+    <string name="platform_slides">បង្ហោះនេះជារូបភាព/slide carousel ដូច្នេះគ្មានឯកសារវីដេអូតែមួយសម្រាប់រក្សាទុកទេ។</string>
+    <string name="platform_audio">រកឃើញតែសំឡេងប៉ុណ្ណោះសម្រាប់បង្ហោះនេះ គ្មានឯកសារវីដេអូសម្រាប់រក្សាទុកទេ។</string>
+    <string name="platform_watermark">មានតែច្បាប់ជាប់ watermark ប៉ុណ្ណោះ។ Xtr3 មិនដក watermark ចេញទេ។</string>
+    <string name="platform_challenge">ម៉ាស៊ីនជំនួយបង្ហាញ bot check ឬបានប្តូរទំព័រ។ Xtr3 ឈប់ត្រឹម challenge មិនព្យាយាមឈ្នះវាទេ។ សូមព្យាយាមម្តងទតពេលក្រោយ ឬប្រើ page detector។</string>
+    <string name="ssstik_note">ដោះស្រាយតាម SSSTik (ភាគីទីបី) · តែបង្ហោះសាធារណៈប៉ុណ្ណោះ</string>
+    <string name="developer_ssstik_switch">ជំនួយ TikTok micro-drama (SSSTik)</string>
+    <string name="developer_ssstik_hint">ពេលម៉ាស៊ីនជាប់មកជាមួយមិនអាចអានតំណ TikTok (ឧទាហរណ៍ភាគ micro-drama) Xtr3 នឹងផ្ញើតំណសាធារណៈមួយនោះទៅ ssstik.io ហើយអាន MP4 ផ្ទាល់ដែលគេបង្ហោះ។ គ្មានការចូលគណនី គ្មានដោះស្រាយ captcha គ្មាន cookies របស់ browser ឬ TikTok ហើយមិនផ្ញើព័ត៌មានផ្សេងអំពីអ្នកទេ។ បិទវាដើម្បី្យគ្រប់សំណើនៅលើឧបករណ៍តែម្តង។</string>
 </resources>

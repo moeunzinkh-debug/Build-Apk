@@ -213,6 +213,9 @@ public final class MainActivity extends Activity {
         if (MediaCandidate.PLATFORM.equals(c.kind)) {
             card.addView(Ui.text(this, getString(R.string.platform_hint, SupportedSite.label(c.url)), 12, false));
         }
+        if (c.platformNote != null && !c.platformNote.isEmpty() && !MediaCandidate.PLATFORM.equals(c.kind)) {
+            card.addView(Ui.text(this, getString(R.string.ssstik_note), 12, false));
+        }
         TextView host = Ui.text(this, LinkParser.host(c.url), 12, false);
         host.setSingleLine(true);
         host.setEllipsize(TextUtils.TruncateAt.END);

@@ -22,6 +22,10 @@ public final class PlatformErrors {
             case "forbidden": res = R.string.platform_forbidden; break;
             case "network": res = R.string.error_network; break;
             case "engine": res = R.string.platform_engine; break;
+            case "slides": res = R.string.platform_slides; break;
+            case "audio": res = R.string.platform_audio; break;
+            case "watermark": res = R.string.platform_watermark; break;
+            case "challenge": res = R.string.platform_challenge; break;
             case "generic": res = R.string.error_generic; break;
             default: return null;
         }

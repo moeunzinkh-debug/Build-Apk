@@ -34,6 +34,26 @@ public class SupportedSiteTest {
         assertEquals(watch, SupportedSite.canonical("https://www.youtube.com/live/dQw4w9WgXcQ"));
         assertEquals(watch, SupportedSite.canonical("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"));
     }
+    @Test public void recognizesTheMicroDramaEntryPointAndTheAlternateShortHost() {
+        assertEquals(SupportedSite.TIKTOK, SupportedSite.identify("https://vt.tiktok.com/ZSpqSc5Rq/"));
+        assertEquals(SupportedSite.TIKTOK, SupportedSite.identify("https://www.xzcs3zlph.com/t/abc/"));
+        assertTrue(SupportedSite.isShortDrama("https://www.tiktok.com/shortdrama/episode/7675706520839033876/8"));
+        assertFalse(SupportedSite.isShortDrama("https://www.tiktok.com/@user/video/7675708755559959821"));
+        assertFalse(SupportedSite.isShortDrama("https://youtu.be/dQw4w9WgXcQ"));
+    }
+    @Test public void onlyExpandsShortenersTheEngineCannotResolveItself() {
+        assertTrue(SupportedSite.needsExpansion("https://b23.tv/TAcxhVF"));
+        assertTrue(SupportedSite.needsExpansion("https://fb.watch/abc/"));
+        // TikTok vm/vt/t and youtu.be are handled natively; expanding them wastes a round trip.
+        assertFalse(SupportedSite.needsExpansion("https://vt.tiktok.com/ZSpqSc5Rq/"));
+        assertFalse(SupportedSite.needsExpansion("https://vm.tiktok.com/abc/"));
+        assertFalse(SupportedSite.needsExpansion("https://youtu.be/dQw4w9WgXcQ"));
+    }
+    @Test public void treatsLoginAndVerificationRedirectsAsInterstitialsNotVideos() {
+        assertTrue(SupportedSite.isInterstitial("https://www.tiktok.com/login?redirect_url=x"));
+        assertTrue(SupportedSite.isInterstitial("https://www.tiktok.com/verify/captcha"));
+        assertFalse(SupportedSite.isInterstitial("https://www.tiktok.com/@user/video/123"));
+    }
     @Test public void tikTokDramaNeedsAnEpisodeLink() {
         assertTrue(SupportedSite.isCollection("https://www.tiktok.com/@user/collection/drama-123"));
         assertTrue(SupportedSite.isCollection("https://www.tiktok.com/@user/series/123"));

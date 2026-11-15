@@ -35,11 +35,20 @@ public final class MediaResolver {
     public Result resolve(String input) throws IOException {
         String url = LinkParser.normalize(input);
         if (SupportedSite.isCollection(url)) throw new IOException("COLLECTION");
-        if (SupportedSite.identify(url) != null) {
-            url = expandShortLink(url);
+        String site = SupportedSite.identify(url);
+        if (site != null) {
+            String target = SupportedSite.needsExpansion(url) ? expandShortLink(url) : url;
+            // The short-drama entry point has no engine extractor; do not waste a round trip on it.
+            if (SupportedSite.isShortDrama(target)) {
+                return new Result(Collections.singletonList(viaFallback(target, null)), false);
+            }
             platform = new PlatformEngine(context);
             try {
-                return new Result(Collections.singletonList(platform.inspect(url, () -> cancelled)), false);
+                return new Result(Collections.singletonList(platform.inspect(target, () -> cancelled)), false);
+            } catch (IOException e) {
+                if (!SupportedSite.TIKTOK.equals(site) || !fallbackEnabled() || isCancelled(e)) throw e;
+                Diagnostics.log("TIKTOK", "Bundled engine could not read this TikTok link; trying the SSSTik fallback.");
+                return new Result(Collections.singletonList(viaFallback(target, e)), false);
             } finally { platform = null; }
         }
         HttpURLConnection connection = client.open(url, null, -1, -1, c -> current = c);
@@ -75,20 +84,51 @@ public final class MediaResolver {
         }
     }
 
+    private boolean fallbackEnabled() {
+        return context.getSharedPreferences("settings", Context.MODE_PRIVATE).getBoolean("ssstikFallback", true);
+    }
+
+    private static boolean isCancelled(IOException e) {
+        String message = e.getMessage();
+        return message != null && message.toLowerCase(java.util.Locale.ROOT).contains("cancel");
+    }
+
+    /**
+     * Resolves one public TikTok post through the SSSTik form flow when the bundled engine
+     * cannot read it. The returned candidate is an ordinary direct MP4 on a TikTok CDN.
+     */
+    private MediaCandidate viaFallback(String url, IOException cause) throws IOException {
+        if (!fallbackEnabled()) {
+            if (cause != null) throw cause;
+            throw new IOException("unsupported");
+        }
+        SsstikResolver.Result resolved;
+        try {
+            resolved = SsstikResolver.resolve(url, () -> cancelled);
+        } catch (IOException e) {
+            // Keep the engine's more specific diagnosis when the fallback learned nothing new.
+            if (cause != null && ("generic".equals(e.getMessage()) || "network".equals(e.getMessage()))) throw cause;
+            throw e;
+        }
+        String title = resolved.title == null || resolved.title.isEmpty() ? "TikTok video" : resolved.title;
+        MediaCandidate candidate = new MediaCandidate(resolved.url, url, title, MediaCandidate.DIRECT);
+        candidate.mime = "video/mp4";
+        candidate.site = SupportedSite.TIKTOK;
+        candidate.platformNote = "SSSTik";
+        return candidate;
+    }
+
     /** Public share shorteners redirect to the real watch page; keep the original URL if expansion fails. */
     private String expandShortLink(String url) {
-        String host = LinkParser.host(url).toLowerCase(java.util.Locale.ROOT);
-        boolean shortLink = host.equals("b23.tv") || host.endsWith(".b23.tv")
-                || host.equals("fb.watch") || host.endsWith(".fb.watch")
-                || host.equals("vm.tiktok.com") || host.equals("vt.tiktok.com")
-                || host.equals("youtu.be");
-        if (!shortLink) return url;
+        if (!SupportedSite.needsExpansion(url)) return url;
         HttpURLConnection connection = null;
         try {
             connection = client.open(url, null, -1, -1, c -> current = c);
             check();
             String next = LinkParser.normalize(connection.getURL().toString());
-            return SupportedSite.identify(next) == null ? url : next;
+            // A bot check or login interstitial is not the video; keep the original share link.
+            if (SupportedSite.identify(next) == null || SupportedSite.isInterstitial(next)) return url;
+            return next;
         } catch (IOException | RuntimeException e) {
             return url;
         } finally {

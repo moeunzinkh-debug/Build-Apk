@@ -17,7 +17,7 @@ public final class DeveloperActivity extends Activity {
     private final Handler main = new Handler(Looper.getMainLooper());
     private TextView logView, statusView;
     private ScrollView scroll;
-    private Switch toggle;
+    private Switch toggle, ssstikToggle;
     private String url;
     private final Runnable refresh = new Runnable() {
         @Override public void run() { renderLog(); main.postDelayed(this, 1000); }
@@ -39,6 +39,12 @@ public final class DeveloperActivity extends Activity {
             Diagnostics.setEnabled(this, checked);
             updateStatus();
             if (checked) Ui.toast(this, R.string.developer_enabled_toast);
+        });
+        ssstikToggle = findViewById(R.id.developer_ssstik);
+        ssstikToggle.setChecked(getSharedPreferences("settings", MODE_PRIVATE).getBoolean("ssstikFallback", true));
+        ssstikToggle.setOnCheckedChangeListener((button, checked) -> {
+            getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("ssstikFallback", checked).apply();
+            Diagnostics.log("TIKTOK", "SSSTik fallback " + (checked ? "enabled" : "disabled"));
         });
         findViewById(R.id.developer_back).setOnClickListener(v -> finish());
         findViewById(R.id.developer_open).setOnClickListener(v -> openDetector());

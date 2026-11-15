@@ -20,7 +20,7 @@ public final class SupportedSite {
         if (matches(host, "facebook.com") || matches(host, "fb.watch") || matches(host, "fb.com")) return FACEBOOK;
         if (matches(host, "youtube.com") || matches(host, "youtu.be")
                 || matches(host, "youtube-nocookie.com")) return YOUTUBE;
-        if (matches(host, "tiktok.com") || matches(host, "tiktokv.com")) return TIKTOK;
+        if (matches(host, "tiktok.com") || matches(host, "tiktokv.com") || matches(host, "xzcs3zlph.com")) return TIKTOK;
         return null;
     }
 
@@ -29,6 +29,34 @@ public final class SupportedSite {
         if (!TIKTOK.equals(identify(url))) return false;
         String path = path(url);
         return path.contains("/collection/") || path.contains("/series/") || path.contains("/playlist/");
+    }
+
+    /**
+     * True for TikTok's newer "micro drama" entry point, e.g.
+     * /shortdrama/episode/&lt;series&gt;/&lt;episode&gt;. The bundled engine has no extractor for
+     * this shape, so it must go to the fallback resolver instead of failing as unsupported.
+     */
+    public static boolean isShortDrama(String url) {
+        if (!TIKTOK.equals(identify(url))) return false;
+        return path(url).matches("^/shortdrama/(?:episode|detail|play)?/?[^?#]*")
+                || path(url).startsWith("/shortdrama/");
+    }
+
+    /**
+     * Only these shorteners need a Java-side redirect lookup. TikTok's vm/vt/t links and
+     * youtu.be are handled natively (by the engine or by canonical()), so expanding them
+     * here would add a slow, failure-prone round trip for no benefit.
+     */
+    public static boolean needsExpansion(String url) {
+        String host = host(url);
+        return matches(host, "b23.tv") || matches(host, "fb.watch");
+    }
+
+    /** A redirect that lands on a login/verification interstitial is not the video. */
+    public static boolean isInterstitial(String url) {
+        String path = path(url);
+        return path.startsWith("/login") || path.startsWith("/verify") || path.startsWith("/captcha")
+                || path.startsWith("/signup") || path.startsWith("/logout") || path.startsWith("/account");
     }
 
     /** Canonical watch URL for yt-dlp; preserves case-sensitive video ids and never invents credentials. */

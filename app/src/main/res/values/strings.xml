@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name" translatable="false">Xtr3</string>
     <string name="example_url" translatable="false">https://xstree.com/vplay/35835513.html</string>
-    <string name="version" translatable="false">Xtr3 1.3.1 · Android 10+</string>
+    <string name="version" translatable="false">Xtr3 1.4.0 · Android 10+</string>
     <string name="tagline">Paste a link. Save the video.</string>
     <string name="tab_new">New download</string>
     <string name="tab_library">My videos</string>
@@ -120,4 +120,11 @@
     <string name="browser_gate_app">This site says: play only in its own app, and it never gives the browser a video URL. Try Desktop mode; if it still blocks, Xtr3 cannot save this page.</string>
     <string name="browser_gate_drm">The player reports DRM/protected playback. Xtr3 cannot save DRM-protected streams.</string>
     <string name="browser_gate_login">The site asks you to sign in before playing. Sign in on the page, then press Grab source again.</string>
+    <string name="platform_slides">This post is a photo/slide carousel, so there is no single video file to save.</string>
+    <string name="platform_audio">Only an audio track could be found for this post; there is no video file to save.</string>
+    <string name="platform_watermark">Only the watermarked copy of this post is available. Xtr3 does not strip watermarks.</string>
+    <string name="platform_challenge">The resolver showed a bot check or changed its page. Xtr3 stops at a challenge instead of trying to defeat it. Try again later or use the page detector.</string>
+    <string name="ssstik_note">Resolved via SSSTik (third-party) · public post only</string>
+    <string name="developer_ssstik_switch">TikTok micro-drama fallback (SSSTik)</string>
+    <string name="developer_ssstik_hint">When the bundled engine cannot read a TikTok link (for example a micro-drama episode), Xtr3 sends that one public link to ssstik.io and reads the direct MP4 it publishes. No login, no captcha solving, no browser or TikTok cookies, and nothing else about you is sent. Turn this off to keep every request on-device.</string>
 </resources>
