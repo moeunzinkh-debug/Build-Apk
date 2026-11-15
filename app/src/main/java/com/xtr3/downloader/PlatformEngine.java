@@ -32,7 +32,6 @@ public final class PlatformEngine {
         }
     }
     private static final String ENGINE_VERSION = "2026.10.26+ejs0.8.0";
-    private static final String ENGINE_VERSION = "2026.10.26+ejs0.8.0";
     private static final Object INIT_LOCK = new Object();
     private static volatile boolean ready;
     private final Context context;
