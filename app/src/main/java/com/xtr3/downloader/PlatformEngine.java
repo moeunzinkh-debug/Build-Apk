@@ -8,7 +8,10 @@ import com.yausername.youtubedl_android.YoutubeDLResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BooleanSupplier;
@@ -28,6 +31,7 @@ public final class PlatformEngine {
             this.note = note;
         }
     }
+    private static final String ENGINE_VERSION = "2026.10.26+ejs0.8.0";
     private static final String ENGINE_VERSION = "2026.10.26+ejs0.8.0";
     private static final Object INIT_LOCK = new Object();
     private static volatile boolean ready;
@@ -131,12 +135,43 @@ public final class PlatformEngine {
             try {
                 YoutubeDL.getInstance().init(context);
                 FFmpeg.getInstance().init(context);
+                installEngine();
                 ready = true;
                 Diagnostics.log("SITE", "Bundled yt-dlp " + ENGINE_VERSION + " + Python/QuickJS/FFmpeg ready");
             } catch (Exception | LinkageError e) {
                 Diagnostics.log("SITE", "Engine initialization failed: " + e.getClass().getSimpleName());
                 throw new IOException("engine");
             }
+        }
+    }
+
+    /** Force the audited raw-resource engine even if an older library copy was already unpacked. */
+    private void installEngine() throws IOException {
+        File dir = new File(new File(context.getNoBackupFilesDir(), "youtubedl-android"), "yt-dlp");
+        if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("Cannot create engine directory.");
+        File target = new File(dir, "yt-dlp");
+        File marker = new File(dir, "xtr3-version");
+        String previous = "";
+        if (marker.isFile()) {
+            try (InputStream in = new java.io.FileInputStream(marker)) {
+                byte[] buffer = new byte[128];
+                int n = in.read(buffer);
+                if (n > 0) previous = new String(buffer, 0, n, java.nio.charset.StandardCharsets.UTF_8).trim();
+            } catch (IOException ignored) { }
+        }
+        if (ENGINE_VERSION.equals(previous) && target.isFile() && target.length() > 0) return;
+        File temp = new File(dir, "yt-dlp.tmp");
+        try (InputStream in = context.getResources().openRawResource(R.raw.ytdlp);
+             OutputStream out = new FileOutputStream(temp)) {
+            byte[] buffer = new byte[64 * 1024];
+            int n;
+            while ((n = in.read(buffer)) != -1) out.write(buffer, 0, n);
+            out.flush();
+        }
+        if (target.exists() && !target.delete()) throw new IOException("Cannot replace old engine.");
+        if (!temp.renameTo(target)) throw new IOException("Cannot install engine.");
+        try (OutputStream out = new FileOutputStream(marker)) {
+            out.write(ENGINE_VERSION.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         }
     }
 

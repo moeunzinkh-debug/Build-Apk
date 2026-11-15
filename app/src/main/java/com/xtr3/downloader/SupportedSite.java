@@ -38,7 +38,7 @@ public final class SupportedSite {
         String host = host(url), path = rawPath(url);
         if (BILIBILI.equals(site) && matches(host, "bilibili.com")) {
             // The international web shell uses /en/video/BV..., but the extractor expects /video/BV....
-            String cleaned = path.replaceFirst("^/(?:en|zh-CN|zh-TW)(?=/)", "");
+            String cleaned = path.replaceFirst("(?i)^/(?:en|zh-cn|zh-tw)(?=/)", "");
             if (!cleaned.equals(path)) return rebuild(url, cleaned);
         }
         if (YOUTUBE.equals(site)) {

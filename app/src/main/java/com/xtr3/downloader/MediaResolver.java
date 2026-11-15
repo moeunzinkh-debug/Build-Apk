@@ -36,6 +36,7 @@ public final class MediaResolver {
         String url = LinkParser.normalize(input);
         if (SupportedSite.isCollection(url)) throw new IOException("COLLECTION");
         if (SupportedSite.identify(url) != null) {
+            url = expandShortLink(url);
             platform = new PlatformEngine(context);
             try {
                 return new Result(Collections.singletonList(platform.inspect(url, () -> cancelled)), false);
@@ -70,6 +71,28 @@ public final class MediaResolver {
             return new Result(candidates, candidates.isEmpty());
         } finally {
             connection.disconnect();
+            current = null;
+        }
+    }
+
+    /** Public share shorteners redirect to the real watch page; keep the original URL if expansion fails. */
+    private String expandShortLink(String url) {
+        String host = LinkParser.host(url).toLowerCase(java.util.Locale.ROOT);
+        boolean shortLink = host.equals("b23.tv") || host.endsWith(".b23.tv")
+                || host.equals("fb.watch") || host.endsWith(".fb.watch")
+                || host.equals("vm.tiktok.com") || host.equals("vt.tiktok.com")
+                || host.equals("youtu.be");
+        if (!shortLink) return url;
+        HttpURLConnection connection = null;
+        try {
+            connection = client.open(url, null, -1, -1, c -> current = c);
+            check();
+            String next = LinkParser.normalize(connection.getURL().toString());
+            return SupportedSite.identify(next) == null ? url : next;
+        } catch (IOException | RuntimeException e) {
+            return url;
+        } finally {
+            if (connection != null) connection.disconnect();
             current = null;
         }
     }

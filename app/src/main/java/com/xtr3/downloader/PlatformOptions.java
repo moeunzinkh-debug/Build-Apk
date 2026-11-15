@@ -16,32 +16,40 @@ public final class PlatformOptions {
         List<String> args = common(url);
         args.add("--dump-single-json");
         args.add("--skip-download");
+        args.add(normalized(url));
         return args;
     }
 
     public static List<String> download(String url, String outputDirectory) {
         List<String> args = common(url);
-        args.add("--newline");
-        args.add("--progress");
-        args.add("--no-simulate");
-        args.add("--no-continue");
-        args.add("--part");
         args.add("--paths"); args.add(outputDirectory);
         args.add("--output"); args.add("video.%(ext)s");
-        args.add("--print"); args.add("after_move:filepath");
         args.add("--windows-filenames");
         args.add("--trim-filenames"); args.add("120");
         args.add("--merge-output-format"); args.add("mp4/mkv");
         args.add("--concurrent-fragments"); args.add("4");
         args.add("--file-access-retries"); args.add("3");
+        args.add("--print"); args.add("after_move:filepath");
+        // --print implies quiet/simulate; re-enable real transfer and progress afterwards.
+        args.add("--no-simulate");
+        args.add("--newline");
+        args.add("--progress");
+        args.add("--no-continue");
+        args.add("--part");
+        args.add(normalized(url));
         return args;
     }
 
-    private static List<String> common(String url) {
-        String normalized = SupportedSite.canonical(LinkParser.normalize(url));
-        if (SupportedSite.identify(normalized) == null || SupportedSite.isCollection(normalized)) {
+    private static String normalized(String url) {
+        String value = SupportedSite.canonical(LinkParser.normalize(url));
+        if (SupportedSite.identify(value) == null || SupportedSite.isCollection(value)) {
             throw new IllegalArgumentException("Unsupported platform link.");
         }
+        return value;
+    }
+
+    private static List<String> common(String url) {
+        normalized(url);
         List<String> args = new ArrayList<>();
         args.add("--ignore-config");
         args.add("--no-config-locations");
@@ -63,7 +71,6 @@ public final class PlatformOptions {
         args.add("--retries"); args.add("3");
         args.add("--fragment-retries"); args.add("3");
         args.add("--extractor-retries"); args.add("2");
-        args.add(normalized);
         return args;
     }
 

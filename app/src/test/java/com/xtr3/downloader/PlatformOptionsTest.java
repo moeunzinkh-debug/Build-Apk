@@ -26,7 +26,6 @@ public class PlatformOptionsTest {
         assertTrue(args.contains("after_move:filepath"));
         assertTrue(args.contains("--match-filters"));
         assertTrue(args.contains("!is_live & !has_drm"));
-
         assertTrue(args.contains("--max-filesize"));
         assertTrue(args.contains(PlatformOptions.MAX_FILE_SIZE));
         assertTrue(args.contains("/data/cache/job"));
