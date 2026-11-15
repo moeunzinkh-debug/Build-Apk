@@ -59,6 +59,20 @@ public class LinkParserTest {
         assertTrue(LinkParser.isProbablyMedia("https://cdn.test/api?mime=video/mp4", null));
         assertFalse(LinkParser.isProbablyMedia("https://cdn.test/page.html", "text/html"));
     }
+    @Test public void directMp4IsNotMislabelledByUnrelatedHlsQuery() {
+        String url = "https://v26-reading-videocdn302.qznovelvod.com/hash/video/tos/cn/tos-cn-v-6fcc8e/id/"
+                + "?a=8662&mime_type=video_mp4&format=master.m3u8";
+        assertFalse(LinkParser.isHls(url, null));
+        assertFalse(LinkParser.isHls(url, "video/mp4"));
+        assertTrue(LinkParser.isProbablyMedia(url, "video/mp4"));
+        assertFalse(LinkParser.isHls("https://cdn.test/movie.mp4?playlist=master.m3u8", null));
+        assertFalse(LinkParser.isHls("https://cdn.test/play?file=movie.mp4&playlist=master.m3u8", null));
+    }
+    @Test public void observedMimeOverridesMisleadingExtension() {
+        assertFalse(LinkParser.isHls("https://cdn.test/master.m3u8", "video/mp4;codecs=\"hvc1.1.6.L186\""));
+        assertTrue(LinkParser.isHls("https://cdn.test/movie.mp4", "application/vnd.apple.mpegurl"));
+        assertTrue(LinkParser.isHls("https://cdn.test/playlist?id=9", "application/x-mpegURL"));
+    }
     @Test public void acceptsObservedMediaMimeWithoutFileExtension() {
         assertTrue(LinkParser.isProbablyMedia("https://cdn.test/movie?id=8", "video/mp4"));
         assertTrue(LinkParser.isProbablyMedia("https://cdn.test/playlist?id=9", "application/vnd.apple.mpegurl"));

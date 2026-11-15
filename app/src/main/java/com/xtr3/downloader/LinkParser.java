@@ -28,7 +28,10 @@ public final class LinkParser {
             Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     private static final Pattern MEDIA_KEY = Pattern.compile(
             "(?:video|content|file|src|source|hls|playlist|stream|download|mp4|m3u8)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern HLS_ANYWHERE = Pattern.compile("(?i)\\.m3u8(?:[?&#]|$)");
+    private static final Pattern HLS_QUERY_FILE = Pattern.compile(
+            "(?i)[?&](?:file|url|src|playlist|stream|hls|m3u8)=[^&#]*\\.m3u8(?:[&#]|$)");
+    private static final Pattern DIRECT_QUERY_FILE = Pattern.compile(
+            "(?i)[?&](?:file|url|src|mp4)=[^&#]*\\.(?:mp4|webm|m4v|mov|ogv|mkv)(?:[&#]|$)");
     private static final Pattern MEDIA_EXT_ANYWHERE = Pattern.compile("(?i)\\.(mp4|m3u8|webm|m4v|mov|ogv|mkv)(?:[?&#]|$)");
     private static final Pattern MEDIA_HINT = Pattern.compile(
             "(?i)(?:^|[?&/])videoplayback(?:[?&/]|$)|[?&](?:mime|type|format)=video(?:%2F|/|[&#]|$)|[?&](?:file|url|src|playlist|stream|hls|mp4|m3u8)=[^&#]*\\.(?:mp4|m3u8|webm|m4v|mov)(?:[&#]|$)");
@@ -84,9 +87,16 @@ public final class LinkParser {
     }
 
     public static boolean isHls(String url, String mime) {
-        String m = mime == null ? "" : mime.toLowerCase(Locale.ROOT);
-        return path(url).endsWith(".m3u8") || (url != null && HLS_ANYWHERE.matcher(url).find())
-                || m.contains("mpegurl") || m.contains("vnd.apple.mpegurl");
+        String m = mime == null ? "" : mime.toLowerCase(Locale.ROOT).split(";", 2)[0].trim();
+        // The observed response type is authoritative: an MP4 CDN URL may contain
+        // ".m3u8" in an unrelated query parameter, but it is still a direct video.
+        if (m.contains("mpegurl")) return true;
+        if (m.startsWith("video/")) return false;
+        String p = path(url);
+        if (p.endsWith(".m3u8")) return true;
+        if (MEDIA_EXT_PATH.matcher(p).find()) return false;
+        if (url != null && DIRECT_QUERY_FILE.matcher(url).find()) return false;
+        return url != null && HLS_QUERY_FILE.matcher(url).find();
     }
 
     public static boolean isVideo(String url, String mime) {

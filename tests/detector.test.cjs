@@ -85,6 +85,26 @@ test('detects HLS hidden in a query parameter', () => {
   assert.equal(reported[0].kind, 'hls');
 });
 
+test('does not label a direct MP4 as HLS because of an unrelated query value', () => {
+  const {reported} = run({resources: [
+    'https://v26-reading-videocdn302.qznovelvod.com/hash/video/tos/cn/id/?a=8662&mime_type=video_mp4&format=master.m3u8',
+    'https://cdn.test/play?file=movie.mp4&playlist=master.m3u8'
+  ]});
+  assert.equal(reported.length, 2);
+  assert.equal(reported[0].kind, 'direct');
+  assert.equal(reported[1].kind, 'direct');
+});
+
+test('observed video MIME overrides a misleading HLS classification', () => {
+  const {reported} = run({windowProps: {__xtr3Observer: {
+    collect: () => [{url: 'https://cdn.test/movie?format=master.m3u8', kind: 'hls', mime: 'video/mp4'}],
+    snapshot: () => ({buffered: false, peer: false, protected: false})
+  }}});
+  assert.equal(reported.length, 1);
+  assert.equal(reported[0].kind, 'video');
+  assert.equal(reported[0].mime, 'video/mp4');
+});
+
 test('rejects the exact API/app false positives from the xstree log', () => {
   const resources = [
     'https://120.76.173.51/video/hot_search?cmd=app',

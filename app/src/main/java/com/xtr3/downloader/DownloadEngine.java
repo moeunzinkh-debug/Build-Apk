@@ -38,6 +38,7 @@ public final class DownloadEngine {
         public long size;
     }
     private static final int MAX_SEGMENT = 64 * 1024 * 1024;
+    private static final long DIRECT_RANGE = 2L * 1024 * 1024;
     private final Context context;
     private final MediaCandidate candidate;
     private final Progress progress;
@@ -167,42 +168,49 @@ public final class DownloadEngine {
                     progress.update(R.string.phase_retry, 2, 0, -1, "");
                     Thread.sleep(800L * attempt);
                 }
-                connection = client.open(candidate.url, candidate.pageUrl, -1, -1, c -> current = c);
-                String mime = HttpMediaClient.mime(connection);
-                if (mime.contains("html") || mime.contains("json") || mime.startsWith("text/")) {
-                    throw new IOException("The link returned a web page instead of a video. Open the page and detect the video again.");
-                }
-                if (!mime.isEmpty() && !mime.startsWith("video/") && !mime.equals("application/octet-stream")
-                        && !mime.equals("binary/octet-stream") && !LinkParser.isVideo(candidate.url, null)) {
-                    throw new IOException("The server returned an unsupported file type: " + mime);
-                }
-                if (mime.isEmpty() || mime.equals("application/octet-stream") || mime.equals("binary/octet-stream")) {
-                    mime = LinkParser.path(candidate.url).endsWith(".webm") ? "video/webm"
-                            : LinkParser.path(candidate.url).endsWith(".mov") ? "video/quicktime" : "video/mp4";
-                }
+                // Mirror the player's bounded Range GETs; some CDNs reject an open-ended
+                // full-file request even when the same URL plays in the WebView.
+                connection = client.open(candidate.url, candidate.pageUrl, 0, DIRECT_RANGE, c -> current = c, candidate.headers);
+                String mime = directMime(connection);
                 long total = HttpMediaClient.length(connection);
                 String name = HttpMediaClient.dispositionName(connection);
                 if ((candidate.title == null || candidate.title.equals("Video")) && name != null) candidate.title = name;
-                long count = 0;
-                try (InputStream in = connection.getInputStream(); RandomAccessFile out = new RandomAccessFile(output, "rw")) {
+                long count;
+                try (RandomAccessFile out = new RandomAccessFile(output, "rw")) {
                     out.setLength(0);
-                    byte[] buffer = new byte[64 * 1024];
-                    int n;
-                    long lastUpdate = 0;
-                    while ((n = in.read(buffer)) != -1) {
+                    count = 0;
+                    while (true) {
                         check();
-                        out.write(buffer, 0, n);
-                        count += n;
-                        long now = android.os.SystemClock.elapsedRealtime();
-                        if (now - lastUpdate > 250) {
-                            int percent = total > 0 ? (int) Math.min(90, count * 90 / total) : 5;
-                            progress.update(R.string.phase_download, percent, count, total, "");
-                            lastUpdate = now;
+                        int code = connection.getResponseCode();
+                        long before = count;
+                        count = appendDirect(connection, out, count, total);
+                        if (code == 200) {
+                            // A server that ignores Range sent the whole file in one response.
+                            if (total > 0 && count != total) throw new IOException("The connection ended before the whole video arrived.");
+                            break;
                         }
+                        if (total > 0) {
+                            if (count >= total) break;
+                            if (count == before) throw new IOException("The connection ended before the whole video arrived.");
+                        } else {
+                            // Rare unknown-length 206: finish with an open-ended range from
+                            // the bytes already saved instead of guessing the file size.
+                            connection.disconnect();
+                            current = null;
+                            connection = client.open(candidate.url, candidate.pageUrl, count, -1, c -> current = c, candidate.headers);
+                            total = HttpMediaClient.length(connection);
+                            count = appendDirect(connection, out, count, total);
+                            if (total > 0 && count != total) throw new IOException("The connection ended before the whole video arrived.");
+                            break;
+                        }
+                        connection.disconnect();
+                        current = null;
+                        connection = client.open(candidate.url, candidate.pageUrl, count, DIRECT_RANGE, c -> current = c, candidate.headers);
+                        long nextTotal = HttpMediaClient.length(connection);
+                        if (nextTotal > 0) total = nextTotal;
                     }
                 }
                 if (count == 0) throw new IOException("The server returned an empty video.");
-                if (total > 0 && count != total) throw new IOException("The connection ended before the whole video arrived.");
                 return new String[]{mime, LinkParser.extension(candidate.url, mime)};
             } catch (IOException e) {
                 last = e;
@@ -220,11 +228,47 @@ public final class DownloadEngine {
         throw last == null ? new IOException("Download failed.") : last;
     }
 
+    private String directMime(HttpURLConnection connection) throws IOException {
+        String mime = HttpMediaClient.mime(connection);
+        if (mime.contains("html") || mime.contains("json") || mime.startsWith("text/")) {
+            throw new IOException("The link returned a web page instead of a video. Open the page and detect the video again.");
+        }
+        if (!mime.isEmpty() && !mime.startsWith("video/") && !mime.equals("application/octet-stream")
+                && !mime.equals("binary/octet-stream") && !LinkParser.isVideo(candidate.url, null)) {
+            throw new IOException("The server returned an unsupported file type: " + mime);
+        }
+        if (mime.isEmpty() || mime.equals("application/octet-stream") || mime.equals("binary/octet-stream")) {
+            mime = LinkParser.path(candidate.url).endsWith(".webm") ? "video/webm"
+                    : LinkParser.path(candidate.url).endsWith(".mov") ? "video/quicktime" : "video/mp4";
+        }
+        return mime;
+    }
+
+    private long appendDirect(HttpURLConnection connection, RandomAccessFile out, long count, long total) throws IOException {
+        try (InputStream in = connection.getInputStream()) {
+            byte[] buffer = new byte[64 * 1024];
+            int n;
+            long lastUpdate = 0;
+            while ((n = in.read(buffer)) != -1) {
+                check();
+                out.write(buffer, 0, n);
+                count += n;
+                long now = android.os.SystemClock.elapsedRealtime();
+                if (now - lastUpdate > 250) {
+                    int percent = total > 0 ? (int) Math.min(90, count * 90 / total) : 5;
+                    progress.update(R.string.phase_download, percent, count, total, "");
+                    lastUpdate = now;
+                }
+            }
+        }
+        return count;
+    }
+
     private HlsPlaylist loadPlaylist(String url, String referer) throws IOException {
         String next = url;
         for (int depth = 0; depth < 4; depth++) {
             check();
-            HttpURLConnection connection = client.open(next, referer, -1, -1, c -> current = c);
+            HttpURLConnection connection = client.open(next, referer, -1, -1, c -> current = c, candidate.headers);
             try {
                 String mime = HttpMediaClient.mime(connection);
                 if (mime.contains("html")) throw new IOException("The playlist link expired. Open the page and detect the video again.");
@@ -297,7 +341,7 @@ public final class DownloadEngine {
     }
 
     private byte[] fetch(String url, String referer, long offset, long length, boolean segment) throws IOException {
-        HttpURLConnection connection = client.open(url, referer, offset, length, c -> current = c);
+        HttpURLConnection connection = client.open(url, referer, offset, length, c -> current = c, candidate.headers);
         try {
             String mime = HttpMediaClient.mime(connection);
             if (mime.contains("html") || mime.contains("json")) throw new IOException("A media segment returned a web page. The link may have expired.");

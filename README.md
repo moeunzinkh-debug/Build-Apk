@@ -2,7 +2,7 @@
 
 Xtr3 is a small Android app for pasting a page URL or direct video URL, finding the video, and saving it to `Movies/Xtr3`.
 
-Current test build: **1.1.4** — adds **Grab source** for deeper original-video URL discovery in the page detector.
+Current test build: **1.1.5** — replays the player's own request context (User-Agent, Referer, Origin, client hints) and uses bounded Range GETs to improve compatibility with session-bound CDNs that returned `403` to a bare downloader. This is a compatibility fix, not a guarantee: expired signed links, login/app-only restrictions, and server-side access controls can still block a download.
 
 Example link included in the app:
 
@@ -18,6 +18,8 @@ Example link included in the app:
 - Open the page in a WebView to capture MP4/WebM/MOV/HLS URLs, including media responses loaded by player `fetch`/XHR in embedded frames
 - **Grab source**: deep-search player globals, inline/JSON code, `data-*` attributes, iframe `srcdoc`, resource timing, and small JSON/JS metadata responses for the original HTTP(S) video URL
 - Explain blob/MSE, WebRTC, and protected playback instead of offering a browser-only `blob:` address as a download
+- Replay the player's captured request headers (never cookies, authorization tokens, or DRM keys) plus bounded Range `GET`s, with a desktop-Chrome fallback, for hotlink/session-checked CDNs
+- Label direct MP4/WebM/MOV responses as video files even when an unrelated query parameter contains `.m3u8`
 - Download direct video files and normal HLS VOD streams
 - HLS MPEG-TS segments, byte ranges, and AES-128 with playlist-provided keys
 - Lossless TS-to-MP4 packaging with Android MediaExtractor/MediaMuxer; if the device cannot package MP4, the app keeps the `.ts` file and tells you
@@ -79,6 +81,7 @@ A `blob:` address is local to the running page and is not an HTTP download link.
 - HLS with separate audio playlists, multiple initialization segments, or fragmented-MP4 discontinuities is not supported in this lightweight build.
 - TS-to-MP4 packaging depends on device codec support. If it fails, the app saves TS instead and does not pretend it is MP4; open it with a player such as VLC.
 - Websites can change their player or expire media URLs. In that case, open the page again and detect a fresh link.
+- `HTTP 403` means the server refused the download. Xtr3 retries with the captured player context and a desktop-Chrome fallback, but it cannot bypass a server's access decision; sign in on the page if required, grab a fresh source, and try again.
 - Only download videos you own or have permission to save, and respect the website's terms.
 
 ## Build locally

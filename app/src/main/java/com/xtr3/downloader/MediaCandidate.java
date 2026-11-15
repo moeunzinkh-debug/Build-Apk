@@ -1,6 +1,7 @@
 package com.xtr3.downloader;
 
 import java.io.Serializable;
+import java.util.Map;
 
 /** A user-selectable media URL. No cookies or credentials are persisted. */
 public final class MediaCandidate implements Serializable {
@@ -15,6 +16,8 @@ public final class MediaCandidate implements Serializable {
     public String kind = DIRECT;
     public String quality = "";
     public long size = -1;
+    /** Replay-safe headers from the player's own request; lives only in memory. */
+    public Map<String, String> headers;
 
     public MediaCandidate() { }
 

@@ -42,10 +42,11 @@ import java.util.Map;
 
 /** A real, user-visible browser fallback for players that create media URLs in JavaScript. */
 public final class BrowserActivity extends Activity {
-    private static final String DESKTOP_UA =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    private static final String DESKTOP_UA = HttpMediaClient.DESKTOP_USER_AGENT;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Map<String, MediaCandidate> candidates = new LinkedHashMap<>();
+    private final Map<String, Map<String, String>> seenHeaders = new LinkedHashMap<>();
+    private volatile String requestUserAgent = HttpMediaClient.USER_AGENT;
     private WebView web;
     private TextView status;
     private Button choose, logButton, desktopButton;
@@ -106,6 +107,7 @@ public final class BrowserActivity extends Activity {
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setUserAgentString(desktopMode ? DESKTOP_UA : HttpMediaClient.USER_AGENT);
+        requestUserAgent = settings.getUserAgentString();
         settings.setUseWideViewPort(desktopMode);
         settings.setLoadWithOverviewMode(desktopMode);
         settings.setSupportZoom(true);
@@ -147,6 +149,7 @@ public final class BrowserActivity extends Activity {
                 }
                 if (request.isForMainFrame() && request.getMethod().equals("GET") && detected(uri.toString(), null)) {
                     Diagnostics.log("HIT", "Main-frame navigation media: " + uri);
+                    rememberHeaders(uri.toString(), request.getRequestHeaders());
                     add(uri.toString(), null, null, currentPage, false);
                     return true;
                 }
@@ -165,6 +168,11 @@ public final class BrowserActivity extends Activity {
                         + (request.isForMainFrame() ? " main " : " ") + url + (range == null ? "" : " Range=" + range));
                 // POST/OPTIONS API calls (video/detail, hot_search, rtcOffer, report/play) are not video files.
                 if (!"GET".equalsIgnoreCase(method) && !"HEAD".equalsIgnoreCase(method)) return null;
+                // Remember the player's request context even when the extension-less URL only
+                // becomes a candidate later (the observer reports it once Content-Type is known).
+                if (!LinkParser.isFragment(url) && !LinkParser.isNonMediaUrl(url)) {
+                    rememberHeaders(url, request.getRequestHeaders());
+                }
                 if (detected(url, null)) {
                     Diagnostics.log("HIT", url);
                     add(url, null, null, currentPage, false);
@@ -256,6 +264,7 @@ public final class BrowserActivity extends Activity {
         applyDesktopUi();
         WebSettings settings = web.getSettings();
         settings.setUserAgentString(desktopMode ? DESKTOP_UA : HttpMediaClient.USER_AGENT);
+        requestUserAgent = settings.getUserAgentString();
         settings.setUseWideViewPort(desktopMode);
         settings.setLoadWithOverviewMode(desktopMode);
         resetDetection();
@@ -290,13 +299,36 @@ public final class BrowserActivity extends Activity {
                     title == null || title.trim().isEmpty() ? "Video" : LinkParser.cleanTitle(title),
                     LinkParser.isHls(normalized, mime) ? MediaCandidate.HLS : MediaCandidate.DIRECT);
             c.mime = mime;
+            Map<String, String> context;
+            synchronized (seenHeaders) { context = seenHeaders.get(normalized); }
+            if (context != null && !context.isEmpty()) c.headers = new LinkedHashMap<>(context);
             candidates.put(normalized, c);
             Diagnostics.log("MEDIA", (trustedVideo ? "video-element " : "network ") + c.kind + " " + normalized);
         }
         main.post(this::updateCount);
     }
+    /** Keeps the player's own replay-safe request headers so session-bound CDNs accept the download. */
+    private void rememberHeaders(String url, Map<String, String> raw) {
+        String key;
+        try { key = LinkParser.normalize(url); } catch (IllegalArgumentException e) { return; }
+        Map<String, String> captured = RequestContext.capture(raw);
+        // Some WebView versions omit User-Agent/Referer from getRequestHeaders(); fall back
+        // to the effective browser UA and the page that initiated the request.
+        captured.putIfAbsent("user-agent", requestUserAgent);
+        captured = RequestContext.capture(RequestContext.replay(captured, currentPage));
+        if (captured.isEmpty()) return;
+        synchronized (seenHeaders) {
+            seenHeaders.remove(key);
+            if (seenHeaders.size() >= 64) {
+                java.util.Iterator<String> oldest = seenHeaders.keySet().iterator();
+                if (oldest.hasNext()) { oldest.next(); oldest.remove(); }
+            }
+            seenHeaders.put(key, captured);
+        }
+    }
     private void resetDetection() {
         synchronized (candidates) { candidates.clear(); }
+        synchronized (seenHeaders) { seenHeaders.clear(); }
         gateMessage = 0;
         bufferedPlayback = false;
         peerPlayback = false;
@@ -356,7 +388,8 @@ public final class BrowserActivity extends Activity {
     private void returnCandidate(MediaCandidate c) {
         CookieManager.getInstance().flush();
         if (c.title == null || c.title.equals("Video")) c.title = LinkParser.cleanTitle(web.getTitle());
-        Diagnostics.log("DEV", "Selected " + c.kind + " " + c.url);
+        Diagnostics.log("DEV", "Selected " + c.kind + " " + c.url
+                + "; context=" + (c.headers == null ? 0 : c.headers.size()));
         setResult(RESULT_OK, new android.content.Intent().putExtra("candidate", c));
         finish();
     }
@@ -375,7 +408,8 @@ public final class BrowserActivity extends Activity {
                     String kind = o.optString("kind", "");
                     String observedMime = o.optString("mime", "");
                     if (observedMime.length() > 200) observedMime = "";
-                    String mime = "hls".equals(kind) || LinkParser.isHls(url, null) ? "application/vnd.apple.mpegurl"
+                    String mime = LinkParser.isHls(url, observedMime)
+                            || ("hls".equals(kind) && observedMime.isEmpty()) ? "application/vnd.apple.mpegurl"
                             : observedMime.isEmpty() ? null : observedMime;
                     boolean trustedElement = "video".equals(kind) && observedMime.isEmpty();
                     add(url, mime, o.optString("title", "Video"), page, trustedElement);

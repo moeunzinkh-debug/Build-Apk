@@ -5,7 +5,8 @@
   'use strict';
   if (window.__xtr3Observer) return;
   var mediaExt = /\.(mp4|m3u8|webm|m4v|mov|ogv|mkv)(?:[?#]|$)/i;
-  var hlsExt = /\.m3u8(?:[?#]|$)/i;
+  var hlsQuery = /[?&](?:file|url|src|playlist|stream|hls|m3u8)=[^&#]*\.m3u8(?:[&#]|$)/i;
+  var directQuery = /[?&](?:file|url|src|mp4)=[^&#]*\.(?:mp4|webm|m4v|mov|ogv|mkv)(?:[&#]|$)/i;
   var fragmentExt = /\.(ts|m4s|aac|mpd)(?:[?#]|$)/i;
   var nonMediaExt = /\.(apk|html?|json|js|css|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|zip)(?:[?#]|$)/i;
   var apiPath = /\/(?:hot_search|detail|chatRooms|unread|rtcOffer|collect|ping)(?:\/|$)|\/(?:report|notice|chat|user|command)\/|\/(?:video|api)\/(?:url|play|playurl|source|sources|info|detail)(?:\/|$)/i;
@@ -47,9 +48,20 @@
     try { var p = new URL(url).pathname; return nonMediaExt.test(p) || (apiPath.test(p) && !mediaExt.test(p)); }
     catch (e) { return true; }
   }
+  function pathOf(url) { try { return new URL(url).pathname; } catch (e) { return ''; } }
+  function isHls(url, mime) {
+    if (hlsMime(mime)) return true;
+    // An observed video MIME wins over an unrelated ".m3u8" query parameter.
+    if (baseMime(mime).indexOf('video/') === 0) return false;
+    var p = pathOf(url);
+    if (/\.m3u8$/i.test(p)) return true;
+    if (mediaExt.test(p)) return false;
+    if (directQuery.test(url)) return false;
+    return hlsQuery.test(url);
+  }
   function classify(url, mime, trustedVideo) {
     if (!url || excluded(url) || fragmentExt.test(url)) return '';
-    if (hlsExt.test(url) || hlsMime(mime)) return 'hls';
+    if (isHls(url, mime)) return 'hls';
     if (nonMediaMime(mime)) return '';
     if (mediaExt.test(url) || videoMime(mime) || trustedVideo) return 'video';
     // An opaque binary response needs a URL hint; a path containing /video/ is not enough.
@@ -108,6 +120,16 @@
     return safe.replace(/(["']?([a-z0-9_.$-]{1,40})["']?\s*[:=]\s*)atob\(\s*["'][A-Za-z0-9+/=]{16,8192}["']\s*\)/gi,
       function (all, prefix, key) { return sensitiveKey(key) ? prefix + '"[redacted]"' : all; });
   }
+  function keyMime(key, value) {
+    key = String(key || '').toLowerCase();
+    if (/^(hls|hlsurl|m3u8)$/.test(key)) return 'application/vnd.apple.mpegurl';
+    if (/^mp4$/.test(key)) return 'video/mp4';
+    // Generic player keys are not an observed response type; a .m3u8 value is still HLS.
+    if (/^(videourl|video_url|playurl|play_url|vodurl|vod_url)$/.test(key)) {
+      return isHls(value, '') ? 'application/vnd.apple.mpegurl' : 'video/mp4';
+    }
+    return '';
+  }
   function extractFromText(text, source) {
     if (typeof text !== 'string' || !text || text.length > MAX_META) return;
     var count = 0, m;
@@ -117,8 +139,7 @@
     while (count < 24 && (m = keyRe.exec(text)) !== null) {
       var key = m[1].toLowerCase(), value = decode(m[2]), mime = '';
       if (sensitiveKey(key)) continue;
-      if (/^(hls|hlsurl|m3u8)$/.test(key)) mime = 'application/vnd.apple.mpegurl';
-      else if (/^(mp4|videourl|video_url|playurl|play_url|vodurl|vod_url)$/.test(key)) mime = 'video/mp4';
+      mime = keyMime(key, value);
       if (mime) { if (candidate(value, mime, source, false)) count++; }
       else if (mediaExt.test(value) || hint.test(value)) { if (candidate(value, '', source, false)) count++; }
     }
@@ -366,9 +387,8 @@
       if (sensitiveKey(key)) continue;
       var item; try { item = value[key]; } catch (e) { continue; }
       if (typeof item === 'string') {
-        var mime = /^(hls|m3u8)$/i.test(key) ? 'application/vnd.apple.mpegurl'
-          : /^(mp4|videourl|video_url|playurl|play_url|vodurl|vod_url)$/i.test(key) ? 'video/mp4' : '';
-        if (mime || mediaExt.test(item) || hint.test(item)) candidate(decode(item), mime, source, false);
+        var decoded = decode(item), mime = keyMime(key, decoded);
+        if (mime || mediaExt.test(decoded) || hint.test(decoded)) candidate(decoded, mime, source, false);
       } else if (typeof item === 'object') walkConfig(item, depth + 1, budget, source);
     }
   }

@@ -2,7 +2,8 @@
   'use strict';
   var found = [], seen = Object.create(null);
   var mediaExt = /\.(mp4|m3u8|webm|m4v|mov|ogv|mkv)(?:[?#]|$)/i;
-  var hlsExt = /\.m3u8(?:[?#]|$)/i;
+  var hlsQuery = /[?&](?:file|url|src|playlist|stream|hls|m3u8)=[^&#]*\.m3u8(?:[&#]|$)/i;
+  var directQuery = /[?&](?:file|url|src|mp4)=[^&#]*\.(?:mp4|webm|m4v|mov|ogv|mkv)(?:[&#]|$)/i;
   var fragmentExt = /\.(ts|m4s|aac)(?:[?#]|$)/i;
   var nonMediaExt = /\.(apk|html?|json|js|css|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|zip)(?:[?#]|$)/i;
   var strongHint = /(?:^|[?&/])videoplayback(?:[?&/]|$)|[?&](?:mime|type|format)=video(?:%2F|\/|[&#]|$)|[?&](?:file|url|src|playlist|stream|hls|mp4|m3u8)=[^&#]*\.(mp4|m3u8|webm|m4v|mov)(?:[&#]|$)/i;
@@ -19,6 +20,16 @@
     try { return String(value || '').replace(/\s+/g, ' ').trim().slice(0, limit); } catch (e) { return ''; }
   }
   function pathOf(url) { try { return new URL(url).pathname; } catch (e) { return ''; } }
+  function isHls(url, mime) {
+    var m = String(mime || '').split(';')[0].trim().toLowerCase();
+    if (/mpegurl/.test(m)) return true;
+    if (m.indexOf('video/') === 0) return false;
+    var p = pathOf(url);
+    if (/\.m3u8$/i.test(p)) return true;
+    if (mediaExt.test(p)) return false;
+    if (directQuery.test(url)) return false;
+    return hlsQuery.test(url);
+  }
   function isApi(url) { return apiPath.test(pathOf(url)) && !mediaExt.test(url); }
   function note(value, bucket) {
     if (!value || typeof value !== 'string') return;
@@ -37,7 +48,7 @@
       if (fragmentExt.test(url) || nonMediaExt.test(url) || isApi(url)) return;
       if (!mediaExt.test(url) && kind !== 'video' && !strongHint.test(url)) return;
       seen[url] = true;
-      found.push({url: url, kind: hlsExt.test(url) ? 'hls' : (kind === 'video' ? 'video' : 'direct'), title: title || document.title || 'Video'});
+      found.push({url: url, kind: isHls(url) ? 'hls' : (kind === 'video' ? 'video' : 'direct'), title: title || document.title || 'Video'});
     } catch (e) {}
   }
   function addObserved(item) {
@@ -47,7 +58,8 @@
       if (!/^https?:/i.test(url) || seen[url] || fragmentExt.test(url) || nonMediaExt.test(url) || isApi(url)) return;
       if (item.kind !== 'hls' && item.kind !== 'video') return;
       seen[url] = true;
-      found.push({url: url, kind: item.kind, mime: String(item.mime || ''), title: document.title || 'Video'});
+      var kind = isHls(url, item.mime) ? 'hls' : (item.kind === 'hls' && !item.mime ? 'hls' : 'video');
+      found.push({url: url, kind: kind, mime: String(item.mime || ''), title: document.title || 'Video'});
     } catch (e) {}
   }
   function unescape(value) {

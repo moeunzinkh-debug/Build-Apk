@@ -118,6 +118,15 @@ test('captures HLS MIME even when the playlist URL has no extension', async () =
   assert.equal(h.network[0].kind, 'hls');
 });
 
+test('an observed MP4 MIME is not mislabelled as HLS by an unrelated query parameter', async () => {
+  const url = 'https://v26-reading-videocdn302.qznovelvod.com/hash/video/tos/cn/id/?a=8662&mime_type=video_mp4&format=master.m3u8';
+  const h = harness({responseMime: 'video/mp4', responseUrl: url});
+  await h.window.fetch(url);
+  assert.equal(h.network.length, 1);
+  assert.equal(h.network[0].kind, 'video');
+  assert.equal(h.network[0].mime, 'video/mp4');
+});
+
 test('does not turn xstree JSON APIs or POST requests into videos', async () => {
   const h = harness({responseMime: 'application/json', responseUrl: 'https://120.76.173.51/video/detail?cmd=app'});
   await h.window.fetch('https://120.76.173.51/video/detail?cmd=app', {method: 'POST'});
