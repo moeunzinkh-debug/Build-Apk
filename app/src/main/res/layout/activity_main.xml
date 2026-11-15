@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root_scroll" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@color/background" android:fillViewport="true" android:clipToPadding="false">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="22dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:gravity="center_vertical" android:orientation="horizontal" android:layout_marginBottom="24dp">
+            <ImageView android:layout_width="58dp" android:layout_height="58dp" android:padding="6dp"
+                android:background="@drawable/bg_logo" android:src="@drawable/ic_brand" android:importantForAccessibility="no" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:orientation="vertical" android:layout_marginStart="14dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="@string/app_name" android:textColor="@color/text" android:textSize="32sp" android:fontFamily="sans-serif-bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="@string/tagline" style="@style/Text.Xtr3.Body" />
+            </LinearLayout>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="18dp">
+            <Button android:id="@+id/tab_new" style="@style/Widget.Xtr3.Button" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/tab_new" />
+            <Button android:id="@+id/tab_library" style="@style/Widget.Xtr3.Button.Secondary" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:text="@string/tab_library" />
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/active_card" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:background="@drawable/bg_card" android:padding="18dp" android:layout_marginBottom="18dp" android:visibility="gone">
+            <TextView android:id="@+id/active_title" android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/Text.Xtr3.Title" android:maxLines="2" android:ellipsize="end" />
+            <TextView android:id="@+id/active_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" style="@style/Text.Xtr3.Body" android:accessibilityLiveRegion="polite" />
+            <ProgressBar android:id="@+id/active_progress" style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent" android:layout_height="8dp" android:layout_marginTop="12dp" android:max="100" android:progressTint="@color/accent" android:progressBackgroundTint="@color/stroke" />
+            <TextView android:id="@+id/active_detail" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" style="@style/Text.Xtr3.Body" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="10dp">
+                <Button android:id="@+id/active_open" style="@style/Widget.Xtr3.Button" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/open" android:visibility="gone" />
+                <Button android:id="@+id/active_cancel" style="@style/Widget.Xtr3.Button.Secondary" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="@string/cancel" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/link_panel" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"
+                android:background="@drawable/bg_card" android:padding="16dp">
+                <EditText android:id="@+id/url_input" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:minLines="2" android:maxLines="4" android:gravity="top|start" android:padding="14dp"
+                    android:background="@drawable/bg_input" android:hint="@string/input_hint" android:textColor="@color/text"
+                    android:textColorHint="@color/muted" android:textSize="15sp" android:inputType="textUri"
+                    android:imeOptions="actionGo" android:importantForAutofill="no" android:maxLength="8192" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp">
+                    <Button android:id="@+id/paste_button" style="@style/Widget.Xtr3.Button.Secondary" android:layout_width="0dp" android:layout_weight="1" android:layout_height="44dp" android:text="@string/paste" />
+                    <Button android:id="@+id/clear_button" style="@style/Widget.Xtr3.Button.Secondary" android:layout_width="0dp" android:layout_weight="1" android:layout_height="44dp" android:layout_marginStart="8dp" android:text="@string/clear" />
+                </LinearLayout>
+                <Button android:id="@+id/example_button" style="@style/Widget.Xtr3.Button.Secondary" android:layout_width="match_parent" android:layout_height="44dp" android:layout_marginTop="8dp" android:text="@string/use_example" android:textSize="13sp" />
+                <Button android:id="@+id/analyze_button" style="@style/Widget.Xtr3.Button" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="@string/analyze" />
+                <Button android:id="@+id/browser_button" style="@style/Widget.Xtr3.Button.Secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="@string/open_browser" />
+                <Button android:id="@+id/developer_button" style="@style/Widget.Xtr3.Button.Secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="@string/developer_options" android:textSize="13sp" />
+            </LinearLayout>
+            <TextView android:id="@+id/status_text" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="18dp" android:text="@string/ready" style="@style/Text.Xtr3.Body" android:accessibilityLiveRegion="polite" />
+            <ProgressBar android:id="@+id/analysis_progress" style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent" android:layout_height="4dp" android:layout_marginTop="8dp"
+                android:indeterminate="true" android:indeterminateTint="@color/accent" android:visibility="gone" />
+            <LinearLayout android:id="@+id/results_container" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="8dp" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="24dp"
+                android:text="@string/legal_note" android:textColor="@color/muted" android:textSize="12sp" android:lineSpacingExtra="3dp" />
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/library_panel" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+            <TextView android:id="@+id/library_empty" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:background="@drawable/bg_card" android:padding="22dp" android:text="@string/library_empty_body" style="@style/Text.Xtr3.Body" />
+            <LinearLayout android:id="@+id/library_container" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+        </LinearLayout>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="28dp"
+            android:gravity="center" android:text="@string/version" android:textColor="@color/muted" android:textSize="11sp" />
+    </LinearLayout>
+</ScrollView>
