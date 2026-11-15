@@ -71,7 +71,7 @@ jobs:
           fi
           exit "$code"
 
-      - name: Enforce 50 MB limit and name APK
+      - name: Enforce 250 MB limit and name APK
         shell: bash
         run: |
           set -euo pipefail
@@ -79,7 +79,7 @@ jobs:
           source_apk="app/build/outputs/apk/debug/app-debug.apk"
           test -s "$source_apk"
           size=$(stat -c%s "$source_apk")
-          limit=50000000
+          limit=250000000
           if (( size > limit )); then
             echo "::error::Xtr3.apk is $size bytes; the limit is $limit bytes."
             exit 1
@@ -91,7 +91,7 @@ jobs:
           {
             echo "## Xtr3 APK"
             echo "- Size: $size bytes ($(( size / 1024 )) KiB)"
-            echo "- Limit: $limit bytes (50 MB)"
+            echo "- Limit: $limit bytes (250 MB)"
             echo "- Build: debug-signed, installable test APK"
             echo "- Download: the **Xtr3-APK** artifact below"
           } >> "$GITHUB_STEP_SUMMARY"

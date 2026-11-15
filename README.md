@@ -2,7 +2,7 @@
 
 Xtr3 is a small Android app for pasting a page URL or direct video URL, finding the video, and saving it to `Movies/Xtr3`.
 
-Current test build: **1.2.0** — bundles the Chromium Cronet network stack (HTTP/2 + QUIC) and Media3/ExoPlayer, replays the player's request context, uses bounded Range GETs, verifies that downloaded bytes are a real video container/track before saving, and adds in-app playback. The APK is larger because it now contains real media/network engines, not padding. This still cannot bypass expired signed links, login/app-only restrictions, DRM, or a server's `403` access decision.
+Current test build: **1.3.0** — adds site-aware downloading for public, non-DRM **Bilibili/B23, Facebook, YouTube, TikTok and TikTok drama episode** links using bundled yt-dlp 2026.10.26, Python, QuickJS, yt-dlp-ejs and FFmpeg. It keeps the Cronet/Media3 engine from 1.2.0 for ordinary pages/direct/HLS links, verifies downloaded bytes, and plays saved videos in-app. The APK is larger because it bundles real extraction/merge/playback engines, not padding. It does not read browser cookies or bypass DRM, paid memberships, login-only/private videos, or live streams.
 
 Example link included in the app:
 
@@ -14,6 +14,7 @@ Example link included in the app:
 
 - Khmer and English UI, following the phone language
 - Paste a page URL or direct video URL
+- Site-aware extraction for Bilibili/B23, Facebook, YouTube, TikTok and individual TikTok drama episodes; separate video+audio streams are merged losslessly with bundled FFmpeg
 - Find links in `<video>`, `<source>`, OpenGraph metadata, JSON, and HTML
 - Open the page in a WebView to capture MP4/WebM/MOV/HLS URLs, including media responses loaded by player `fetch`/XHR in embedded frames
 - **Grab source**: deep-search player globals, inline/JSON code, `data-*` attributes, iframe `srcdoc`, resource timing, and small JSON/JS metadata responses for the original HTTP(S) video URL
@@ -47,7 +48,7 @@ Every push to `main` or `arena/**`, and every manual **Run workflow**, runs **Bu
 3. In **Artifacts**, download **Xtr3-APK**.
 4. Unzip it and install `Xtr3.apk` on an Android phone. You may need to allow installs from unknown sources for the app used to open the APK.
 
-The workflow fails if the APK is larger than **50,000,000 bytes**. Since 1.2.0 the APK is intentionally larger because it bundles the embedded Cronet network engine and Media3/ExoPlayer; it is not padded with useless bytes. The artifact includes `Xtr3.apk.sha256` for verification and is retained for 14 days.
+The workflow fails if the APK is larger than **250,000,000 bytes**. Since 1.3.0 the APK is intentionally larger because it bundles Cronet, Media3/ExoPlayer, yt-dlp/Python/QuickJS/EJS and FFmpeg for arm64-v8a, armeabi-v7a and x86_64; it is not padded with useless bytes. The artifact includes `Xtr3.apk.sha256` for verification and is retained for 14 days.
 
 **Build type:** the workflow builds `assembleDebug`, signed with the runner's debug key so it can be installed for testing immediately. This is not a Play Store release. Debug keys can differ between runs, so installing over an older build may require uninstalling the old build first. For a public release, add your own private signing configuration and store the keystore in GitHub Secrets, not in the repository.
 
@@ -79,13 +80,18 @@ A `blob:` address is local to the running page and is not an HTTP download link.
 ## Limitations
 
 - No DRM/Widevine, SAMPLE-AES, special-access videos you are not authorized to save, or live HLS streams without `ENDLIST`.
-- MPEG-DASH (`.mpd`) may appear in diagnostics, but this build downloads direct files and HLS only; it does not offer a DASH manifest as a fake video file.
-- HLS with separate audio playlists, multiple initialization segments, or fragmented-MP4 discontinuities is not supported in this lightweight build.
+- For ordinary pages, MPEG-DASH (`.mpd`) may appear in diagnostics but is not offered as a fake video file. For the supported platforms, yt-dlp handles DASH/HLS formats and merges audio+video when needed.
+- The lightweight direct/HLS path still does not support separate audio playlists, multiple initialization segments, or fragmented-MP4 discontinuities; supported-platform transfers use yt-dlp/FFmpeg instead.
 - TS-to-MP4 packaging depends on device codec support. If it fails, the app saves TS instead and does not pretend it is MP4; open it with a player such as VLC.
 - Websites can change their player or expire media URLs. In that case, open the page again and detect a fresh link.
 - `HTTP 403` means the server refused the download. Xtr3 retries with the captured player context over embedded Cronet, then desktop/platform fallbacks, but it cannot bypass a server's access decision; sign in on the page if required, grab a fresh source, and try again.
 - `Size not reported yet` is not an “unknown file” verdict. It means the detected URL did not expose a reliable `Content-Length`/total range before download. Xtr3 still verifies the actual bytes before saving.
+- TikTok drama: paste the share link of one episode/video, not a whole collection/series/playlist page. Paid, login-only, private, region-blocked, live and DRM videos are not bypassed.
 - Only download videos you own or have permission to save, and respect the website's terms.
+
+## License
+
+GPL-3.0-only; see `LICENSE` and `LICENSES.md`. The APK links GPLv3 youtubedl-android and bundles the third-party components listed there.
 
 ## Build locally
 
@@ -99,4 +105,4 @@ node --test tests/*.cjs
 
 Output: `app/build/outputs/apk/debug/app-debug.apk`.
 
-Architecture: native Java Android UI, WebView for link detection, embedded Cronet with HttpURLConnection fallback for downloads, a small HLS parser, Media3/ExoPlayer for in-app playback, MediaStore for saving, and a foreground service for user-started transfers. Unit tests cover the URL/HTML/HLS parsers and video-container probing; Node tests cover the browser detector, source grabbing, and fetch/XHR/MSE/WebRTC observation. Real website and video playback checks must be done on an Android device.
+Architecture: native Java Android UI, WebView for link detection, embedded Cronet with HttpURLConnection fallback for ordinary downloads, bundled yt-dlp/Python/QuickJS/EJS/FFmpeg for supported platforms, a small HLS parser, Media3/ExoPlayer for in-app playback, MediaStore for saving, and a foreground service for user-started transfers. Unit tests cover the URL/HTML/HLS parsers and video-container probing; Node tests cover the browser detector, source grabbing, and fetch/XHR/MSE/WebRTC observation. Real website and video playback checks must be done on an Android device.

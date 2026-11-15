@@ -46,6 +46,7 @@ public final class DownloadEngine {
     private final HttpMediaClient client = new HttpMediaClient();
     private final Map<String, byte[]> keys = new HashMap<>();
     private volatile HttpURLConnection current;
+    private volatile PlatformEngine platform;
 
     public DownloadEngine(Context context, MediaCandidate candidate, Progress progress, BooleanSupplier cancelled) {
         this.context = context.getApplicationContext();
@@ -53,7 +54,10 @@ public final class DownloadEngine {
         this.progress = progress;
         this.cancelled = cancelled;
     }
-    public void disconnect() { HttpURLConnection c = current; if (c != null) c.disconnect(); }
+    public void disconnect() {
+        HttpURLConnection c = current; if (c != null) c.disconnect();
+        PlatformEngine p = platform; if (p != null) p.cancel();
+    }
 
     public Saved execute() throws IOException {
         String id = UUID.randomUUID().toString();
@@ -61,6 +65,7 @@ public final class DownloadEngine {
         if (!directory.isDirectory() && !directory.mkdirs()) throw new IOException("Cannot create the temporary download folder.");
         File raw = new File(directory, id + ".part");
         File converted = new File(directory, id + ".mp4");
+        File platformDirectory = new File(directory, id + "-platform");
         File publishedFile = null;
         Uri publishedUri = null;
         boolean committed = false;
@@ -68,11 +73,21 @@ public final class DownloadEngine {
             check();
             progress.update(R.string.phase_prepare, 1, 0, -1, "");
             boolean hls = MediaCandidate.HLS.equals(candidate.kind);
+            boolean platformJob = MediaCandidate.PLATFORM.equals(candidate.kind);
             String mime = candidate.mime == null || candidate.mime.isEmpty() ? "video/mp4" : candidate.mime;
             String extension = LinkParser.extension(candidate.url, mime);
             String note = "";
             long estimate = candidate.size;
-            if (hls) {
+            if (platformJob) {
+                requireSpace(estimate < 0 ? -1 : estimate * 3);
+                platform = new PlatformEngine(context);
+                PlatformEngine.Result result = platform.download(candidate, platformDirectory, progress, cancelled);
+                publishedFile = result.file;
+                candidate.title = result.title;
+                note = result.note;
+                mime = "video/mp4";
+                extension = ".mp4";
+            } else if (hls) {
                 HlsPlaylist playlist = loadPlaylist(candidate.url, candidate.pageUrl);
                 boolean fragmented = playlist.fragmentedMp4();
                 extension = fragmented ? ".mp4" : ".ts";
@@ -158,9 +173,18 @@ public final class DownloadEngine {
             }
             if (!raw.delete()) raw.deleteOnExit();
             if (!converted.delete()) converted.deleteOnExit();
+            deleteTree(platformDirectory);
+            platform = null;
             keys.clear();
             disconnect();
         }
+    }
+
+    private static void deleteTree(File root) {
+        if (root == null || !root.exists()) return;
+        File[] children = root.listFiles();
+        if (children != null) for (File child : children) deleteTree(child);
+        if (!root.delete()) root.deleteOnExit();
     }
 
     private String[] downloadDirect(File output) throws IOException {

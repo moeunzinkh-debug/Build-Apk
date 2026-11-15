@@ -8,6 +8,7 @@ public final class MediaCandidate implements Serializable {
     private static final long serialVersionUID = 1L;
     public static final String DIRECT = "direct";
     public static final String HLS = "hls";
+    public static final String PLATFORM = "platform";
 
     public String url;
     public String pageUrl;
@@ -16,6 +17,8 @@ public final class MediaCandidate implements Serializable {
     public String kind = DIRECT;
     public String quality = "";
     public long size = -1;
+    public String site;
+    public String platformNote = "";
     /** Replay-safe headers from the player's own request; lives only in memory. */
     public Map<String, String> headers;
 

@@ -152,6 +152,8 @@ public final class DownloadService extends Service {
         String message = e.getMessage();
         if (e instanceof java.net.UnknownHostException) return getString(R.string.error_network);
         if (e instanceof java.net.SocketTimeoutException) return getString(R.string.error_timeout);
+        String platform = PlatformErrors.message(this, message);
+        if (platform != null) return platform;
         if (message == null || message.trim().isEmpty()) return getString(R.string.error_generic);
         if (message.length() > 300) message = message.substring(0, 300);
         return message;

@@ -142,8 +142,11 @@ public final class MainActivity extends Activity {
     }
 
     private String normalizedInput() {
-        try { return LinkParser.normalize(input.getText().toString()); }
-        catch (IllegalArgumentException e) { status.setText(R.string.url_invalid); input.requestFocus(); return null; }
+        try {
+            String text = input.getText().toString();
+            String url = firstUrl(text);
+            return LinkParser.normalize(url == null ? text : url);
+        } catch (IllegalArgumentException e) { status.setText(R.string.url_invalid); input.requestFocus(); return null; }
     }
     private void analyze() {
         if (busy) return;
@@ -157,7 +160,7 @@ public final class MainActivity extends Activity {
         status.setText(R.string.analysing);
         analysisProgress.setVisibility(View.VISIBLE);
         analyzeButton.setText(R.string.stop_analysis);
-        MediaResolver current = new MediaResolver();
+        MediaResolver current = new MediaResolver(this);
         resolver = current;
         worker.execute(() -> {
             try {
@@ -185,6 +188,8 @@ public final class MainActivity extends Activity {
     private String readable(Exception e) {
         if (e instanceof java.net.UnknownHostException) return getString(R.string.error_network);
         if (e instanceof java.net.SocketTimeoutException) return getString(R.string.error_timeout);
+        String platform = PlatformErrors.message(this, e.getMessage());
+        if (platform != null) return platform;
         String message = e.getMessage();
         return message == null || message.trim().isEmpty() ? getString(R.string.error_generic) : message;
     }
@@ -205,6 +210,9 @@ public final class MainActivity extends Activity {
         String format = format(c);
         String size = MediaCandidate.HLS.equals(c.kind) ? getString(R.string.save_location) : Ui.bytes(this, c.size);
         card.addView(Ui.text(this, getString(R.string.metadata_size, format, size), 13, false));
+        if (MediaCandidate.PLATFORM.equals(c.kind)) {
+            card.addView(Ui.text(this, getString(R.string.platform_hint, SupportedSite.label(c.url)), 12, false));
+        }
         TextView host = Ui.text(this, LinkParser.host(c.url), 12, false);
         host.setSingleLine(true);
         host.setEllipsize(TextUtils.TruncateAt.END);
@@ -215,6 +223,10 @@ public final class MainActivity extends Activity {
         return card;
     }
     private String format(MediaCandidate c) {
+        if (MediaCandidate.PLATFORM.equals(c.kind)) {
+            String quality = c.quality == null || c.quality.isEmpty() ? getString(R.string.format_platform) : c.quality;
+            return SupportedSite.label(c.url) + " · " + quality;
+        }
         if (MediaCandidate.HLS.equals(c.kind)) {
             return c.quality == null || c.quality.isEmpty() || c.quality.equals("Best available")
                     ? getString(R.string.format_hls) : "HLS · " + c.quality;
@@ -253,7 +265,13 @@ public final class MainActivity extends Activity {
             try {
                 MediaCandidate c = (MediaCandidate) data.getSerializableExtra("candidate");
                 if (c != null) {
-                    input.setText(c.pageUrl == null ? c.url : c.pageUrl);
+                    String page = c.pageUrl == null ? c.url : c.pageUrl;
+                    if (SupportedSite.identify(page) != null) {
+                        input.setText(page);
+                        analyze();
+                        return;
+                    }
+                    input.setText(page);
                     renderCandidates(java.util.Collections.singletonList(c), false, c.pageUrl);
                     confirmDownload(c);
                 }

@@ -1,5 +1,6 @@
 package com.xtr3.downloader;
 
+import android.content.Context;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Collections;
@@ -15,18 +16,31 @@ public final class MediaResolver {
             this.needsBrowser = needsBrowser;
         }
     }
+    private final Context context;
     private final HttpMediaClient client = new HttpMediaClient();
     private volatile boolean cancelled;
     private volatile HttpURLConnection current;
+    private volatile PlatformEngine platform;
+
+    public MediaResolver(Context context) { this.context = context.getApplicationContext(); }
 
     public void cancel() {
         cancelled = true;
         HttpURLConnection c = current;
         if (c != null) c.disconnect();
+        PlatformEngine p = platform;
+        if (p != null) p.cancel();
     }
 
     public Result resolve(String input) throws IOException {
         String url = LinkParser.normalize(input);
+        if (SupportedSite.isCollection(url)) throw new IOException("COLLECTION");
+        if (SupportedSite.identify(url) != null) {
+            platform = new PlatformEngine(context);
+            try {
+                return new Result(Collections.singletonList(platform.inspect(url, () -> cancelled)), false);
+            } finally { platform = null; }
+        }
         HttpURLConnection connection = client.open(url, null, -1, -1, c -> current = c);
         try {
             check();

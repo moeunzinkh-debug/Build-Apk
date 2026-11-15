@@ -3,7 +3,7 @@
     <string name="tagline">ដាក់តំណភ្ជាប់ រួចរក្សាទុកវីដេអូ។</string>
     <string name="tab_new">ទាញយកថ្មី</string>
     <string name="tab_library">វីដេអូរបស់ខ្ញុំ</string>
-    <string name="input_hint">ដាក់តំណទំព័រ ឬតំណវីដេអូ…</string>
+    <string name="input_hint">ដាក់តំណ Bilibili, Facebook, YouTube, TikTok ឬតំណវីដេអូ…</string>
     <string name="paste">បិទភ្ជាប់</string>
     <string name="clear">សម្អាត</string>
     <string name="use_example">ប្រើតំណឧទាហរណ៍</string>
@@ -37,6 +37,18 @@
     <string name="format_direct">ឯកសារវីដេអូ</string>
     <string name="format_video_mime">វីដេអូ %1$s</string>
     <string name="format_hls">HLS · គុណភាពល្អបំផុតដែលមាន</string>
+    <string name="format_platform">គុណភាពល្អបំផុតដែលមាន</string>
+    <string name="platform_hint">%1$s · វីដេអូសាធារណៈ · រហូតដល់ 1080p បើមាន</string>
+    <string name="platform_collection">សូមដាក់តំណចែករំលែករបស់វីដេអូ ឬភាគ drama មួយ មិនមែនទំព័រស៊េរី ឬ playlist ទាំងមូលទេ។</string>
+    <string name="platform_protected">វីដេអូនេះមានការពារ DRM។ Xtr3 មិនអាចរក្សាទុកបានទេ។</string>
+    <string name="platform_paid">វីដេអូនេះតម្រូវឱ្យមានសមាជិកបង់ប្រាក់ ការទិញ ឬ subscription។ Xtr3 មិនឆ្លងកាត់សិទ្ធិចូលប្រើបង់ប្រាក់ទេ។</string>
+    <string name="platform_login">វីដេអូនេះតម្រូវឱ្យចូលគណនី ឬមិនជាសាធារណៈ។ Xtr3 មិនអាន cookies របស់ browser ឬឆ្លងកាត់ការចូលគណនីទេ។</string>
+    <string name="platform_unavailable">វីដេអូនេះឯកជន ត្រូវបានលុប ត្រូវបានរារាំងតាមតំបន់ ឬមិនអាចប្រើបាន។</string>
+    <string name="platform_live">មិនគាំទ្រការផ្សាយបន្តផ្ទាល់ ឬ premiere ដែលមិនទាន់ចាប់ផ្តើម។ សាកម្តងទៀតពេលវាក្លាយជាវីដេអូ replay ធម្មតា។</string>
+    <string name="platform_unsupported">រកមិនឃើញទម្រង់វីដេអូគ្មាន DRM ដែលអាចទាញយកបានសម្រាប់តំណនេះ។ ពិនិត្យថាវាជាតំណវីដេអូ/ភាគសាធារណតែមួយ។</string>
+    <string name="platform_rate">គេហទំព័រកំពុងកំណត់ចំនួនសំណើ។ រង់ចាំបន្តិច រួចសាកម្តងទៀត។</string>
+    <string name="platform_forbidden">គេហទំព័របដិសេធការទាញយកនេះ (403)។ វាអាចតម្រូវឱ្យចូលគណនី តំណថ្មី ឬមិនអនុញ្ញាតឱ្យរក្សាទុក។</string>
+    <string name="platform_engine">ម៉ាស៊ីនវីដេអូដែលភ្ជាប់មកជាមួយមិនអាចចាប់ផ្តើមលើឧបករណ៍នេះ។ ពិនិត្យទំហំទំនេរ រួចសាកម្តងទៀត។</string>
     <string name="metadata_size">%1$s · %2$s</string>
     <string name="size_unknown">ម៉ាស៊ីនមេមិនទាន់ប្រាប់ទំហំ</string>
     <string name="library_meta">%1$s · %2$s</string>

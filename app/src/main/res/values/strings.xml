@@ -2,11 +2,11 @@
 <resources>
     <string name="app_name" translatable="false">Xtr3</string>
     <string name="example_url" translatable="false">https://xstree.com/vplay/35835513.html</string>
-    <string name="version" translatable="false">Xtr3 1.2.0 · Android 10+</string>
+    <string name="version" translatable="false">Xtr3 1.3.0 · Android 10+</string>
     <string name="tagline">Paste a link. Save the video.</string>
     <string name="tab_new">New download</string>
     <string name="tab_library">My videos</string>
-    <string name="input_hint">Paste a page or video URL…</string>
+    <string name="input_hint">Paste Bilibili, Facebook, YouTube, TikTok or video URL…</string>
     <string name="paste">Paste</string>
     <string name="clear">Clear</string>
     <string name="use_example">Use example link</string>
@@ -35,11 +35,23 @@
     <string name="player_error">Playback failed (%1$s). The file is saved; try another player if needed.</string>
     <string name="clipboard_empty">Clipboard does not contain a link.</string>
     <string name="permission_hint">Notifications are optional; the transfer can still run without them.</string>
-    <string name="legal_note">Only download videos you own or have permission to save. DRM-protected and live streams are not supported.</string>
+    <string name="legal_note">Only download videos you own or have permission to save. Bilibili, Facebook, YouTube and TikTok episode links are supported when public and non-DRM. Paid, login-only, private and live videos are not bypassed.</string>
     <string name="save_location">Saved to Movies/Xtr3</string>
     <string name="format_direct">Video file</string>
     <string name="format_video_mime">%1$s video</string>
     <string name="format_hls">HLS · best available quality</string>
+    <string name="format_platform">Best available</string>
+    <string name="platform_hint">%1$s · public video · up to 1080p when available</string>
+    <string name="platform_collection">Paste the share link of one drama episode/video, not the whole series or playlist page.</string>
+    <string name="platform_protected">This video is DRM/protected. Xtr3 cannot save it.</string>
+    <string name="platform_paid">This video needs a paid membership, purchase, or subscription. Xtr3 does not bypass paid access.</string>
+    <string name="platform_login">This video needs an account/login or is not public. Xtr3 does not read your browser cookies or bypass login.</string>
+    <string name="platform_unavailable">The video is private, removed, region-blocked, or unavailable.</string>
+    <string name="platform_live">Live streams and upcoming premieres are not supported. Try again after the video becomes a normal replay.</string>
+    <string name="platform_unsupported">No downloadable non-DRM video format was found for this link. Check that it is one public video/episode link.</string>
+    <string name="platform_rate">The platform is rate-limiting requests. Wait a while and try again.</string>
+    <string name="platform_forbidden">The platform refused this download (403). It may require login, a fresh link, or may not allow saving.</string>
+    <string name="platform_engine">The bundled video engine could not start on this device. Check free storage and try again.</string>
     <string name="metadata_size">%1$s · %2$s</string>
     <string name="size_unknown">Size not reported yet</string>
     <string name="library_meta">%1$s · %2$s</string>
