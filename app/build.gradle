@@ -10,8 +10,8 @@ android {
         applicationId 'com.xtr3.downloader'
         minSdk 29
         targetSdk 35
-        versionCode 11
-        versionName '1.4.0'
+        versionCode 12
+        versionName '1.5.0'
         resourceConfigurations += ['en', 'km']
         // ABI selection lives in splits.abi below; ndk.abiFilters must not also be set.
     }
@@ -87,4 +87,6 @@ dependencies {
     implementation 'io.github.junkfood02.youtubedl-android:library:0.18.1'
     implementation 'io.github.junkfood02.youtubedl-android:ffmpeg:0.18.1'
     testImplementation 'junit:junit:4.13.2'
+    // Real org.json for local JVM tests of the quality menu; Android supplies it at runtime.
+    testImplementation 'org.json:json:20240303'
 }

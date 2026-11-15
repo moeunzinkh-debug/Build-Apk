@@ -12,6 +12,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BooleanSupplier;
@@ -59,11 +61,18 @@ public final class PlatformEngine {
                     LinkParser.cleanTitle(info.optString("title", "Video")), MediaCandidate.PLATFORM);
             candidate.site = SupportedSite.identify(normalized);
             candidate.mime = "video/mp4";
-            candidate.quality = quality(info);
-            candidate.size = size(info);
             candidate.platformNote = info.optString("extractor_key", "");
+            ArrayList<MediaCandidate.Quality> qualities = new ArrayList<>(PlatformFormats.fromInfo(info));
+            if (!qualities.isEmpty()) {
+                candidate.qualities = qualities;
+                candidate.selectQuality(PlatformFormats.defaultChoice(qualities));
+                candidate.platformInfoPath = saveInfo(response.getOut());
+            } else {
+                candidate.quality = quality(info);
+                candidate.size = size(info);
+            }
             Diagnostics.log("SITE", SupportedSite.label(normalized) + " metadata: "
-                    + candidate.quality + "; extractor=" + candidate.platformNote);
+                    + candidate.quality + "; qualities=" + qualities.size() + "; extractor=" + candidate.platformNote);
             return candidate;
         } catch (org.json.JSONException e) {
             Diagnostics.log("SITE", "Metadata JSON error: " + e.getClass().getSimpleName());
@@ -87,7 +96,15 @@ public final class PlatformEngine {
         String url = SupportedSite.canonical(LinkParser.normalize(candidate.url));
         init();
         check(cancelled);
-        YoutubeDLRequest request = request(PlatformOptions.download(url, directory.getAbsolutePath()));
+        String selector = candidate.selectedQuality == null ? PlatformOptions.FORMAT : candidate.selectedQuality.id;
+        List<String> args;
+        File info = candidate.platformInfoPath == null ? null : new File(candidate.platformInfoPath);
+        if (info != null && info.isFile() && PlatformFormats.validSelector(selector)) {
+            args = PlatformOptions.downloadFromInfo(info.getAbsolutePath(), directory.getAbsolutePath(), selector);
+        } else {
+            args = PlatformOptions.download(url, directory.getAbsolutePath(), selector);
+        }
+        YoutubeDLRequest request = request(args);
         String id = begin();
         final long[] lastPublish = {0};
         try {
@@ -175,15 +192,40 @@ public final class PlatformEngine {
     }
 
     private static YoutubeDLRequest request(List<String> args) {
-        // YoutubeDLRequest puts options before the URL. The final argument is the normalized URL.
-        YoutubeDLRequest request = new YoutubeDLRequest(args.get(args.size() - 1));
-        for (int i = 0; i < args.size() - 1; i++) {
+        // YoutubeDLRequest puts options before the URL. The final argument is the normalized URL,
+        // except for --load-info-json downloads, which intentionally have no URL at all.
+        boolean loadInfo = args.contains("--load-info-json");
+        YoutubeDLRequest request = loadInfo
+                ? new YoutubeDLRequest(Collections.<String>emptyList())
+                : new YoutubeDLRequest(args.get(args.size() - 1));
+        int optionEnd = loadInfo ? args.size() : args.size() - 1;
+        for (int i = 0; i < optionEnd; i++) {
             String option = args.get(i);
-            if (option.startsWith("--") && i + 1 < args.size() - 1 && !args.get(i + 1).startsWith("--")) {
+            if (option.startsWith("--") && i + 1 < optionEnd && !args.get(i + 1).startsWith("--")) {
                 request.addOption(option, args.get(++i));
             } else request.addOption(option);
         }
         return request;
+    }
+
+    /** Keeps the exact single-video info dict in private cache so the chosen format can download without re-extraction. */
+    private String saveInfo(String json) {
+        if (json == null || json.isEmpty() || json.length() > 8 * 1024 * 1024) return null;
+        try {
+            File dir = new File(context.getCacheDir(), "platform-info");
+            if (!dir.isDirectory() && !dir.mkdirs()) return null;
+            File[] old = dir.listFiles();
+            long cutoff = System.currentTimeMillis() - 24L * 60 * 60 * 1000;
+            if (old != null) for (File f : old) if (f.isFile() && f.lastModified() < cutoff) f.delete();
+            File file = File.createTempFile("info-", ".json", dir);
+            try (OutputStream out = new FileOutputStream(file)) {
+                out.write(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            }
+            return file.getAbsolutePath();
+        } catch (IOException | RuntimeException e) {
+            Diagnostics.log("SITE", "Could not cache info JSON: " + e.getClass().getSimpleName());
+            return null;
+        }
     }
 
     private String begin() {

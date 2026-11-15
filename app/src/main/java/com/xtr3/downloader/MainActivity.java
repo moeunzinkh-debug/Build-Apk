@@ -207,9 +207,16 @@ public final class MainActivity extends Activity {
     private LinearLayout candidateCard(MediaCandidate c) {
         LinearLayout card = Ui.card(this);
         card.addView(Ui.text(this, c.title == null ? getString(R.string.app_name) : c.title, 17, true));
-        String format = format(c);
-        String size = MediaCandidate.HLS.equals(c.kind) ? getString(R.string.save_location) : Ui.bytes(this, c.size);
-        card.addView(Ui.text(this, getString(R.string.metadata_size, format, size), 13, false));
+        TextView meta = Ui.text(this, getString(R.string.metadata_size, format(c), sizeLabel(c)), 13, false);
+        card.addView(meta);
+        if (c.qualities != null && c.qualities.size() > 1) {
+            Button quality = Ui.button(this, getString(R.string.choose_quality, qualityLabel(c)), false);
+            quality.setOnClickListener(v -> showQualityPicker(c, () -> {
+                meta.setText(getString(R.string.metadata_size, format(c), sizeLabel(c)));
+                quality.setText(getString(R.string.choose_quality, qualityLabel(c)));
+            }));
+            card.addView(quality);
+        }
         if (MediaCandidate.PLATFORM.equals(c.kind)) {
             card.addView(Ui.text(this, getString(R.string.platform_hint, SupportedSite.label(c.url)), 12, false));
         }
@@ -221,18 +228,54 @@ public final class MainActivity extends Activity {
         host.setEllipsize(TextUtils.TruncateAt.END);
         card.addView(host);
         Button download = Ui.button(this, getString(R.string.download), true);
-        download.setOnClickListener(v -> confirmDownload(c));
+        download.setOnClickListener(v -> {
+            if (c.qualities != null && c.qualities.size() > 1) showQualityPicker(c, () -> confirmDownload(c));
+            else confirmDownload(c);
+        });
         card.addView(download);
         return card;
     }
+    private String sizeLabel(MediaCandidate c) {
+        return MediaCandidate.HLS.equals(c.kind) && c.size <= 0 ? getString(R.string.save_location) : Ui.bytes(this, c.size);
+    }
+    private String qualityLabel(MediaCandidate c) {
+        if (c.selectedQuality != null && c.selectedQuality.label != null && !c.selectedQuality.label.isEmpty()) {
+            return c.selectedQuality.label;
+        }
+        return c.quality == null || c.quality.isEmpty() ? getString(R.string.format_platform) : c.quality;
+    }
+    private void showQualityPicker(MediaCandidate c, Runnable after) {
+        if (c.qualities == null || c.qualities.isEmpty()) { after.run(); return; }
+        ArrayList<MediaCandidate.Quality> qualities = c.qualities;
+        CharSequence[] labels = new CharSequence[qualities.size()];
+        int checked = 0;
+        for (int i = 0; i < qualities.size(); i++) {
+            MediaCandidate.Quality q = qualities.get(i);
+            if (c.selectedQuality != null && q.id != null && q.id.equals(c.selectedQuality.id)) checked = i;
+            String size = q.size > 0 ? Ui.bytes(this, q.size) : getString(R.string.size_unknown);
+            String label = getString(R.string.quality_option, q.label, size);
+            labels[i] = q.hasAudio ? label : label + " · " + getString(R.string.quality_no_audio);
+        }
+        final int[] choice = {checked};
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.choose_quality_title)
+                .setMessage(c.title)
+                .setSingleChoiceItems(labels, checked, (d, which) -> choice[0] = which)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.select_quality, (d, w) -> {
+                    c.selectQuality(qualities.get(Math.max(0, Math.min(choice[0], qualities.size() - 1))));
+                    after.run();
+                })
+                .show();
+    }
     private String format(MediaCandidate c) {
         if (MediaCandidate.PLATFORM.equals(c.kind)) {
-            String quality = c.quality == null || c.quality.isEmpty() ? getString(R.string.format_platform) : c.quality;
-            return SupportedSite.label(c.url) + " · " + quality;
+            return SupportedSite.label(c.url) + " · " + qualityLabel(c);
         }
         if (MediaCandidate.HLS.equals(c.kind)) {
-            return c.quality == null || c.quality.isEmpty() || c.quality.equals("Best available")
-                    ? getString(R.string.format_hls) : "HLS · " + c.quality;
+            String quality = qualityLabel(c);
+            return quality.equals(getString(R.string.format_platform)) || quality.equals("Best available")
+                    ? getString(R.string.format_hls) : "HLS · " + quality;
         }
         String path = LinkParser.path(c.url);
         int dot = path.lastIndexOf('.');
@@ -276,7 +319,8 @@ public final class MainActivity extends Activity {
                     }
                     input.setText(page);
                     renderCandidates(java.util.Collections.singletonList(c), false, c.pageUrl);
-                    confirmDownload(c);
+                    if (c.qualities != null && c.qualities.size() > 1) showQualityPicker(c, () -> confirmDownload(c));
+                    else confirmDownload(c);
                 }
             } catch (RuntimeException e) { Ui.toast(this, R.string.error_generic); }
         }

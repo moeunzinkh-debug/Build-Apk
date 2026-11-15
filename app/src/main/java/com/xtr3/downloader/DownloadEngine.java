@@ -88,7 +88,9 @@ public final class DownloadEngine {
                 mime = "video/mp4";
                 extension = ".mp4";
             } else if (hls) {
-                HlsPlaylist playlist = loadPlaylist(candidate.url, candidate.pageUrl);
+                boolean selectedVariant = candidate.selectedQuality != null && candidate.selectedQuality.url != null;
+                String hlsUrl = selectedVariant ? candidate.selectedQuality.url : candidate.url;
+                HlsPlaylist playlist = loadPlaylist(hlsUrl, candidate.pageUrl, selectedVariant);
                 boolean fragmented = playlist.fragmentedMp4();
                 extension = fragmented ? ".mp4" : ".ts";
                 mime = fragmented ? "video/mp4" : "video/mp2t";
@@ -174,6 +176,7 @@ public final class DownloadEngine {
             if (!raw.delete()) raw.deleteOnExit();
             if (!converted.delete()) converted.deleteOnExit();
             deleteTree(platformDirectory);
+            deleteInfoFile(candidate.platformInfoPath);
             platform = null;
             keys.clear();
             disconnect();
@@ -185,6 +188,12 @@ public final class DownloadEngine {
         File[] children = root.listFiles();
         if (children != null) for (File child : children) deleteTree(child);
         if (!root.delete()) root.deleteOnExit();
+    }
+
+    private static void deleteInfoFile(String path) {
+        if (path == null || path.isEmpty()) return;
+        File file = new File(path);
+        if (file.isFile() && !file.delete()) file.deleteOnExit();
     }
 
     private String[] downloadDirect(File output) throws IOException {
@@ -293,7 +302,7 @@ public final class DownloadEngine {
         return count;
     }
 
-    private HlsPlaylist loadPlaylist(String url, String referer) throws IOException {
+    private HlsPlaylist loadPlaylist(String url, String referer, boolean selectedVariant) throws IOException {
         String next = url;
         for (int depth = 0; depth < 4; depth++) {
             check();
@@ -305,6 +314,9 @@ public final class DownloadEngine {
                 next = connection.getURL().toString();
                 HlsPlaylist playlist = HlsPlaylist.parse(text, next);
                 if (!playlist.master) return playlist;
+                // The user already chose a variant. If that URL unexpectedly points at another
+                // master playlist, stop honestly instead of silently switching to a different quality.
+                if (selectedVariant) throw new IOException("quality");
                 next = HlsPlaylist.bestVariant(playlist).url;
             } finally { connection.disconnect(); current = null; }
         }

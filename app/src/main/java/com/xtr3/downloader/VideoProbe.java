@@ -36,7 +36,8 @@ public final class VideoProbe {
         String signature = signature(prefix, file.length());
         String mime = declaredMime == null ? "" : declaredMime.toLowerCase(Locale.ROOT).split(";", 2)[0].trim();
         String extension;
-        if ("webm".equals(signature)) { mime = "video/webm"; extension = ".webm"; }
+        if ("mkv".equals(signature)) { mime = "video/x-matroska"; extension = ".mkv"; }
+        else if ("webm".equals(signature)) { mime = "video/webm"; extension = ".webm"; }
         else if ("ts".equals(signature)) { mime = "video/mp2t"; extension = ".ts"; }
         else if ("flv".equals(signature)) { mime = "video/x-flv"; extension = ".flv"; }
         else if ("avi".equals(signature)) { mime = "video/x-msvideo"; extension = ".avi"; }
@@ -97,7 +98,12 @@ public final class VideoProbe {
     }
 
     static String signature(byte[] data, long fileLength) {
-        if (data.length >= 4 && (data[0] & 255) == 0x1a && data[1] == 0x45 && (data[2] & 255) == 0xdf && (data[3] & 255) == 0xa3) return "webm";
+        if (data.length >= 4 && (data[0] & 255) == 0x1a && data[1] == 0x45 && (data[2] & 255) == 0xdf && (data[3] & 255) == 0xa3) {
+            // Matroska and WebM share the EBML magic; the DocType element near the head
+            // distinguishes them. FFmpeg-merged platform downloads can legitimately be MKV.
+            String head = new String(data, 0, Math.min(data.length, 256), StandardCharsets.US_ASCII);
+            return head.contains("matroska") ? "mkv" : "webm";
+        }
         if (data.length >= 3 && data[0] == 'F' && data[1] == 'L' && data[2] == 'V') return "flv";
         if (data.length >= 12 && data[0] == 'R' && data[1] == 'I' && data[2] == 'F' && data[3] == 'F'
                 && data[8] == 'A' && data[9] == 'V' && data[10] == 'I' && data[11] == ' ') return "avi";

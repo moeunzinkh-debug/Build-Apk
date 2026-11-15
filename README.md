@@ -2,7 +2,7 @@
 
 Xtr3 is a small Android app for pasting a page URL or direct video URL, finding the video, and saving it to `Movies/Xtr3`.
 
-Current test build: **1.4.0** — adds site-aware downloading for public, non-DRM **Bilibili/B23, Facebook, YouTube, TikTok and TikTok drama episode** links using bundled yt-dlp 2026.10.26, Python, QuickJS, yt-dlp-ejs and FFmpeg. It keeps the Cronet/Media3 engine from 1.2.0 for ordinary pages/direct/HLS links, verifies downloaded bytes, and plays saved videos in-app. Since 1.3.1 the workflow builds a minified **release** and splits it into one APK per CPU ABI (arm64-v8a, armeabi-v7a, x86_64), so a phone installs only the native engines it can run instead of one ~167 MB universal file. The weight is real extraction/merge/playback engine code, not padding. It does not read browser cookies or bypass DRM, paid memberships, login-only/private videos, or live streams.
+Current test build: **1.5.0** — adds a **pre-download quality picker** for public, non-DRM **Bilibili/B23, Facebook, YouTube, TikTok and TikTok drama episode** links using bundled yt-dlp 2026.10.26, Python, QuickJS, yt-dlp-ejs and FFmpeg. It keeps the Cronet/Media3 engine from 1.2.0 for ordinary pages/direct/HLS links, verifies downloaded bytes, and plays saved videos in-app. Since 1.3.1 the workflow builds a minified **release** and splits it into one APK per CPU ABI (arm64-v8a, armeabi-v7a, x86_64), so a phone installs only the native engines it can run instead of one ~167 MB universal file. The weight is real extraction/merge/playback engine code, not padding. It does not read browser cookies or bypass DRM, paid memberships, login-only/private videos, or live streams.
 
 Since 1.4.0 there is also an opt-out **TikTok micro-drama fallback**: TikTok's newer
 `/shortdrama/episode/...` links have no yt-dlp extractor, so when the bundled engine
@@ -22,6 +22,7 @@ Example link included in the app:
 - Khmer and English UI, following the phone language
 - Paste a page URL or direct video URL
 - Site-aware extraction for Bilibili/B23, Facebook, YouTube, TikTok and individual TikTok drama episodes; separate video+audio streams are merged losslessly with bundled FFmpeg
+- **Choose video quality before downloading**: the analysis result lists real resolutions/containers reported by the platform, with estimated size when available. The chosen yt-dlp format is downloaded from the cached single-video info JSON, so the page is not extracted a second time. HLS master playlists offer their real variants instead of silently taking the highest bandwidth. See [docs/quality-picker.md](docs/quality-picker.md).
 - Find links in `<video>`, `<source>`, OpenGraph metadata, JSON, and HTML
 - Open the page in a WebView to capture MP4/WebM/MOV/HLS URLs, including media responses loaded by player `fetch`/XHR in embedded frames
 - **Grab source**: deep-search player globals, inline/JSON code, `data-*` attributes, iframe `srcdoc`, resource timing, and small JSON/JS metadata responses for the original HTTP(S) video URL
@@ -34,7 +35,7 @@ Example link included in the app:
 - HLS MPEG-TS segments, byte ranges, and AES-128 with playlist-provided keys
 - Lossless TS-to-MP4 packaging with Android MediaExtractor/MediaMuxer; if the device cannot package MP4, the app keeps the `.ts` file and tells you
 - Fragmented MP4 HLS with a single initialization segment
-- Selects the highest-bandwidth variant from an HLS master playlist
+- Offers the variants from an HLS master playlist and defaults to the highest-bandwidth combined audio/video variant
 - Progress, cancel, retry, and background download notification
 - Saves through MediaStore to `Movies/Xtr3` and keeps an in-app video list
 - No ads, no analytics, and no Xtr3 server collecting your video list
@@ -63,7 +64,7 @@ The workflow fails if any single per-ABI APK is larger than **120,000,000 bytes*
 
 1. Open **Xtr3**.
 2. Tap **Use example link** or paste another URL.
-3. Tap **Find video**. If a video link is found, tap **Download** on the one you want.
+3. Tap **Find video**. If a video link is found, tap **Quality** to choose a resolution/container, then tap **Download**. If several qualities exist, Download also opens the quality picker first. The confirmation shows the selected quality before the transfer starts.
 4. If nothing is found, tap **Open page detector**. On the page that opens, press Play once, then tap **Grab source**. Xtr3 deep-searches the player code, page code, and small network metadata responses for the original video URL. **Choose video** stays dimmed and says **No video link** until a real HTTP(S) file or playlist is found. A playing picture alone is not enough: the player may use a temporary browser buffer or a peer connection.
 5. Watch progress. When finished, tap **Open** or find the file in **My videos** / `Movies/Xtr3`.
 
@@ -91,6 +92,7 @@ A `blob:` address is local to the running page and is not an HTTP download link.
 - The lightweight direct/HLS path still does not support separate audio playlists, multiple initialization segments, or fragmented-MP4 discontinuities; supported-platform transfers use yt-dlp/FFmpeg instead.
 - TS-to-MP4 packaging depends on device codec support. If it fails, the app saves TS instead and does not pretend it is MP4; open it with a player such as VLC.
 - Websites can change their player or expire media URLs. In that case, open the page again and detect a fresh link.
+- The quality menu only offers resolutions/containers the platform actually reports. Sizes are estimates when reported, and signed quality URLs can expire; run **Find video** again if a chosen quality is no longer available.
 - `HTTP 403` means the server refused the download. Xtr3 retries with the captured player context over embedded Cronet, then desktop/platform fallbacks, but it cannot bypass a server's access decision; sign in on the page if required, grab a fresh source, and try again.
 - `Size not reported yet` is not an “unknown file” verdict. It means the detected URL did not expose a reliable `Content-Length`/total range before download. Xtr3 still verifies the actual bytes before saving.
 - TikTok drama: paste the share link of one episode/video, not a whole collection/series/playlist page. Paid, login-only, private, region-blocked, live and DRM videos are not bypassed.

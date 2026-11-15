@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name" translatable="false">Xtr3</string>
     <string name="example_url" translatable="false">https://xstree.com/vplay/35835513.html</string>
-    <string name="version" translatable="false">Xtr3 1.4.0 · Android 10+</string>
+    <string name="version" translatable="false">Xtr3 1.5.0 · Android 10+</string>
     <string name="tagline">Paste a link. Save the video.</string>
     <string name="tab_new">New download</string>
     <string name="tab_library">My videos</string>
@@ -41,7 +41,7 @@
     <string name="format_video_mime">%1$s video</string>
     <string name="format_hls">HLS · best available quality</string>
     <string name="format_platform">Best available</string>
-    <string name="platform_hint">%1$s · public video · up to 1080p when available</string>
+    <string name="platform_hint">%1$s · public video · choose quality before download</string>
     <string name="platform_collection">Paste the share link of one drama episode/video, not the whole series or playlist page.</string>
     <string name="platform_protected">This video is DRM/protected. Xtr3 cannot save it.</string>
     <string name="platform_paid">This video needs a paid membership, purchase, or subscription. Xtr3 does not bypass paid access.</string>
@@ -127,4 +127,10 @@
     <string name="ssstik_note">Resolved via SSSTik (third-party) · public post only</string>
     <string name="developer_ssstik_switch">TikTok micro-drama fallback (SSSTik)</string>
     <string name="developer_ssstik_hint">When the bundled engine cannot read a TikTok link (for example a micro-drama episode), Xtr3 sends that one public link to ssstik.io and reads the direct MP4 it publishes. No login, no captcha solving, no browser or TikTok cookies, and nothing else about you is sent. Turn this off to keep every request on-device.</string>
+    <string name="choose_quality">Quality: %1$s</string>
+    <string name="choose_quality_title">Choose video quality</string>
+    <string name="quality_option">%1$s · %2$s</string>
+    <string name="quality_no_audio">no audio</string>
+    <string name="select_quality">Use this quality</string>
+    <string name="platform_quality">The selected quality is no longer available. Find the video again and choose another quality.</string>
 </resources>

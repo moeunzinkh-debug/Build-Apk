@@ -68,6 +68,9 @@ used immediately and never persisted.
 
 Ported from this account's own prior teardown in `moeunzinkh-debug/VTgrabing`
 (`docs/research/ssstik-frontend-analysis.md`, PR #12), which analysed publicly
-served client assets and three independent open-source clients. Live end-to-end
-behaviour is **unverified** from this sandbox: it cannot open a TLS session to
-ssstik.io or TikTok.
+served client assets and three independent open-source clients. A later inspection
+read the current public JavaScript bundle (HTMX 2.0.6 plus a `debug` telemetry
+parameter), but direct curl/Chromium access still failed before a form POST and the
+TikTok target returned HTTP 403. Live end-to-end behaviour is therefore still
+**unverified**; see `docs/ssstik-live-check.km.md` for the observed workflow and the
+limits of that check.

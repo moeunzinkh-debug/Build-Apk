@@ -142,25 +142,40 @@ public final class MediaResolver {
     }
 
     private MediaCandidate hlsText(String text, String actualUrl, String page) throws IOException {
-        String url = actualUrl;
-        String quality = "Best available";
-        for (int depth = 0; depth < 3; depth++) {
-            HlsPlaylist playlist = HlsPlaylist.parse(text, url);
-            if (!playlist.master) {
-                MediaCandidate c = new MediaCandidate(url, page, "Video", MediaCandidate.HLS);
-                c.mime = "application/vnd.apple.mpegurl";
-                c.quality = quality;
-                return c;
-            }
-            HlsPlaylist.Variant best = HlsPlaylist.bestVariant(playlist);
-            url = best.url;
-            quality = best.label();
-            check();
-            HttpURLConnection next = client.open(url, page, -1, -1, c -> current = c);
-            try { text = client.readText(next, 2 * 1024 * 1024); url = next.getURL().toString(); }
-            finally { next.disconnect(); current = null; }
+        HlsPlaylist playlist = HlsPlaylist.parse(text, actualUrl);
+        MediaCandidate c = new MediaCandidate(actualUrl, page, "Video", MediaCandidate.HLS);
+        c.mime = "application/vnd.apple.mpegurl";
+        if (!playlist.master) {
+            c.quality = "Best available";
+            return c;
         }
-        throw new IOException("This playlist has too many nested master playlists.");
+        java.util.ArrayList<MediaCandidate.Quality> qualities = new java.util.ArrayList<>();
+        java.util.ArrayList<HlsPlaylist.Variant> variants = new java.util.ArrayList<>(playlist.variants);
+        variants.sort((a, b) -> Long.compare(b.bandwidth, a.bandwidth));
+        for (HlsPlaylist.Variant v : variants) {
+            // The lightweight HLS path cannot merge a separate audio rendition.
+            if (!playlist.audioRenditions.isEmpty() && playlist.audioRenditions.contains(v.audioGroup)) continue;
+            MediaCandidate.Quality q = new MediaCandidate.Quality();
+            q.id = v.url;
+            q.url = v.url;
+            q.label = v.label();
+            q.quality = v.resolution.isEmpty() ? v.label() : v.resolution;
+            q.ext = "HLS";
+            q.height = height(v.resolution);
+            q.hasAudio = true;
+            qualities.add(q);
+        }
+        if (qualities.isEmpty()) throw new IOException("No variant with combined audio and video was found.");
+        c.qualities = qualities;
+        c.selectQuality(qualities.get(0));
+        return c;
+    }
+
+    private static int height(String resolution) {
+        if (resolution == null) return 0;
+        String[] parts = resolution.toLowerCase(java.util.Locale.ROOT).split("x");
+        if (parts.length != 2) return 0;
+        try { return Integer.parseInt(parts[1].trim()); } catch (NumberFormatException e) { return 0; }
     }
 
     private String name(HttpURLConnection connection, String page) {

@@ -21,6 +21,16 @@ public class VideoProbeTest {
         byte[] data = {0x1a, 0x45, (byte) 0xdf, (byte) 0xa3, 1, 2, 3};
         assertEquals("webm", VideoProbe.signature(data, 1024));
     }
+    @Test public void distinguishesMatroskaFromWebm() {
+        byte[] mkv = new byte[64];
+        mkv[0] = 0x1a; mkv[1] = 0x45; mkv[2] = (byte) 0xdf; mkv[3] = (byte) 0xa3;
+        System.arraycopy("matroska".getBytes(StandardCharsets.US_ASCII), 0, mkv, 24, 8);
+        assertEquals("mkv", VideoProbe.signature(mkv, 1024));
+        byte[] webm = new byte[64];
+        webm[0] = 0x1a; webm[1] = 0x45; webm[2] = (byte) 0xdf; webm[3] = (byte) 0xa3;
+        System.arraycopy("webm".getBytes(StandardCharsets.US_ASCII), 0, webm, 24, 4);
+        assertEquals("webm", VideoProbe.signature(webm, 1024));
+    }
     @Test public void detectsTransportStreamSync() {
         byte[] data = new byte[400];
         data[0] = 0x47;

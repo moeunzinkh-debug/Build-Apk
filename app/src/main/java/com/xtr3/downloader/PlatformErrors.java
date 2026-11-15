@@ -18,6 +18,7 @@ public final class PlatformErrors {
             case "unavailable": res = R.string.platform_unavailable; break;
             case "live": res = R.string.platform_live; break;
             case "unsupported": res = R.string.platform_unsupported; break;
+            case "quality": res = R.string.platform_quality; break;
             case "rate": res = R.string.platform_rate; break;
             case "forbidden": res = R.string.platform_forbidden; break;
             case "network": res = R.string.error_network; break;
