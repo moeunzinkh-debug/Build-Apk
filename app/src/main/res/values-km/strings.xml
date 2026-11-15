@@ -29,14 +29,16 @@
     <string name="deleted">បានលុបវីដេអូ។</string>
     <string name="delete_failed">មិនអាចលុបឯកសារបានទេ។ ឯកសារនេះប្រហែលជាត្រូវបានលុបរួចហើយ។</string>
     <string name="no_player">គ្មានកម្មវិធីអាចបើកវីដេអូនេះបានទេ។ សាកល្បងប្រើ VLC។</string>
+    <string name="player_error">ចាក់មិនបាន (%1$s)។ ឯកសារត្រូវបានរក្សាទុកហើយ; បើចាំបាច់សាកបើកជាមួយកម្មវិធីចាក់ផ្សេង។</string>
     <string name="clipboard_empty">Clipboard មិនមានតំណភ្ជាប់ទេ។</string>
     <string name="permission_hint">ការជូនដំណឹងជាជម្រើសប៉ុណ្ណោះ ការទាញយកនៅតែអាចដំណើរការបាន។</string>
     <string name="legal_note">ទាញយកតែវីដេអូដែលអ្នកជាម្ចាស់ ឬមានការអនុញ្ញាតឱ្យរក្សាទុកប៉ុណ្ណោះ។ មិនគាំទ្រវីដេអូការពារដោយ DRM ឬការផ្សាយបន្តផ្ទាល់ទេ។</string>
     <string name="save_location">រក្សាទុកនៅ Movies/Xtr3</string>
     <string name="format_direct">ឯកសារវីដេអូ</string>
+    <string name="format_video_mime">វីដេអូ %1$s</string>
     <string name="format_hls">HLS · គុណភាពល្អបំផុតដែលមាន</string>
     <string name="metadata_size">%1$s · %2$s</string>
-    <string name="size_unknown">មិនស្គាល់ទំហំ</string>
+    <string name="size_unknown">ម៉ាស៊ីនមេមិនទាន់ប្រាប់ទំហំ</string>
     <string name="library_meta">%1$s · %2$s</string>
     <string name="download_confirm_title">រក្សាទុកវីដេអូនេះ?</string>
     <string name="download_confirm_body">%1$s\n\nប្រភេទ៖ %2$s\nពី៖ %3$s\n\nរក្សាទុកនៅ Movies/Xtr3។ អាចមានការគិតថ្លៃអ៊ីនធឺណិត។</string>
@@ -45,6 +47,7 @@
     <string name="phase_prepare">កំពុងរៀបចំការទាញយក…</string>
     <string name="phase_download">កំពុងទាញយកវីដេអូ…</string>
     <string name="phase_convert">កំពុងរៀបចំជា MP4…</string>
+    <string name="phase_verify">កំពុងផ្ទៀងផ្ទាត់ឯកសារវីដេអូ…</string>
     <string name="phase_save">កំពុងរក្សាទុកនៅ Movies/Xtr3…</string>
     <string name="phase_done">បានរក្សាទុកវីដេអូ</string>
     <string name="phase_failed">ការទាញយកបរាជ័យ</string>

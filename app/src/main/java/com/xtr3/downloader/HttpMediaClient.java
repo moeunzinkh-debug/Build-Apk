@@ -6,7 +6,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
@@ -38,22 +37,26 @@ public final class HttpMediaClient {
     public HttpURLConnection open(String url, String referer, long offset, long length,
                                   CurrentConnection sink, Map<String, String> replay) throws IOException {
         String original = LinkParser.normalize(url);
-        for (int attempt = 0; attempt < 2; attempt++) {
-            // Attempt 0 replays the player's own context. Attempt 1 keeps the captured
-            // referer/origin but swaps inconsistent client hints for desktop Chrome.
+        boolean embedded = NetworkStack.hasEmbedded();
+        int attempts = embedded ? 4 : 2;
+        for (int attempt = 0; attempt < attempts; attempt++) {
+            // With embedded Cronet: player-context Cronet, desktop Cronet, player-context
+            // platform, desktop platform. Without it: the two platform profiles only.
+            boolean desktop = attempt % 2 == 1;
+            boolean preferEmbedded = embedded && attempt < 2;
             String next = original;
             Map<String, String> context = RequestContext.capture(replay);
-            if (attempt == 1) {
+            if (desktop) {
                 context.remove("user-agent");
                 context.keySet().removeIf(key -> key.startsWith("sec-ch-ua"));
             }
             Map<String, String> headers = RequestContext.replay(context, referer);
             String userAgent = headers.get("user-agent");
-            headers.put("user-agent", userAgent != null ? userAgent : attempt == 0 ? USER_AGENT : DESKTOP_USER_AGENT);
+            headers.put("user-agent", userAgent != null ? userAgent : desktop ? DESKTOP_USER_AGENT : USER_AGENT);
             String denied = null;
             HttpURLConnection connection = null;
             for (int hop = 0; hop <= 6; hop++) {
-                connection = (HttpURLConnection) new URL(next).openConnection();
+                connection = NetworkStack.open(next, preferEmbedded);
                 if (sink != null) sink.set(connection);
                 connection.setInstanceFollowRedirects(false);
                 connection.setConnectTimeout(20_000);
@@ -85,6 +88,8 @@ public final class HttpMediaClient {
                     continue;
                 }
                 if (code == 401 || code == 403) {
+                    Diagnostics.log("NET", "HTTP " + code + " via " + (preferEmbedded ? "Cronet" : "platform")
+                            + (desktop ? " desktop" : " player") + " host=" + LinkParser.host(next));
                     denied = "HTTP " + code + ": access denied. Open the page in Xtr3, sign in if needed, and detect the video again.";
                     connection.disconnect();
                     if (sink != null) sink.set(null);
@@ -104,7 +109,7 @@ public final class HttpMediaClient {
                 return connection;
             }
             if (denied == null) throw new IOException("Could not connect to the media server.");
-            if (attempt == 1) throw new IOException(denied);
+            if (attempt == attempts - 1) throw new IOException(denied);
         }
         throw new IOException("Could not connect to the media server.");
     }

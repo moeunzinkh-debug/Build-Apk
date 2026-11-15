@@ -79,11 +79,19 @@ final class Ui {
     }
     static void toast(Context c, int resource) { Toast.makeText(c, resource, Toast.LENGTH_LONG).show(); }
     static void toast(Context c, String message) { Toast.makeText(c, message, Toast.LENGTH_LONG).show(); }
-    static void openVideo(Context c, String uri, String mime) {
+    static void openVideo(Context c, String uri, String mime) { openVideo(c, uri, mime, null); }
+    static void openVideo(Context c, String uri, String mime, String title) {
         try {
-            Intent intent = new Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(uri), mime)
+            Intent intent = new Intent(c, PlayerActivity.class).setDataAndType(Uri.parse(uri), mime)
+                    .putExtra("title", title)
                     .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             c.startActivity(intent);
-        } catch (ActivityNotFoundException | SecurityException e) { toast(c, R.string.no_player); }
+        } catch (RuntimeException e) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(uri), mime)
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                c.startActivity(intent);
+            } catch (ActivityNotFoundException | SecurityException ex) { toast(c, R.string.no_player); }
+        }
     }
 }

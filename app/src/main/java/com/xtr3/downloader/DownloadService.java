@@ -134,7 +134,8 @@ public final class DownloadService extends Service {
         if (done) {
             builder.setTimeoutAfter(30_000);
             if (uri != null) {
-                Intent play = new Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(uri), mime)
+                Intent play = new Intent(this, PlayerActivity.class).setDataAndType(Uri.parse(uri), mime)
+                        .putExtra("title", latest.title)
                         .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 builder.setContentIntent(PendingIntent.getActivity(this, 1, play, flags));
             }

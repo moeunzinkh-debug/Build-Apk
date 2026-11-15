@@ -96,7 +96,7 @@ public final class BrowserActivity extends Activity {
         observerScript = asset("observer.js");
         configure();
         Diagnostics.log("APP", getString(R.string.version) + "; desktop=" + desktopMode
-                + "; frameObserver=" + (observerHandle != null));
+                + "; frameObserver=" + (observerHandle != null) + "; net=" + NetworkStack.description());
         status.setText(R.string.browser_loading);
         web.loadUrl(originalUrl);
     }

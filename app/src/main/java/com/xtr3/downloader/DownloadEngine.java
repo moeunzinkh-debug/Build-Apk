@@ -104,6 +104,11 @@ public final class DownloadEngine {
             }
             check();
             if (publishedFile == null || publishedFile.length() == 0) throw new IOException("The server returned an empty video.");
+            progress.update(R.string.phase_verify, 94, publishedFile.length(), -1, "");
+            VideoProbe.Result verified = VideoProbe.inspect(publishedFile, mime);
+            mime = verified.mime;
+            extension = verified.extension;
+            if (!verified.note.isEmpty()) note = note.isEmpty() ? verified.note : note + " · " + verified.note;
             String name = LinkParser.safeFilename(candidate.title) + "_" + System.currentTimeMillis() + extension;
             progress.update(R.string.phase_save, 96, publishedFile.length(), -1, "");
             ContentValues values = new ContentValues();

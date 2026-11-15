@@ -2,7 +2,7 @@
 
 Xtr3 is a small Android app for pasting a page URL or direct video URL, finding the video, and saving it to `Movies/Xtr3`.
 
-Current test build: **1.1.5** — replays the player's own request context (User-Agent, Referer, Origin, client hints) and uses bounded Range GETs to improve compatibility with session-bound CDNs that returned `403` to a bare downloader. This is a compatibility fix, not a guarantee: expired signed links, login/app-only restrictions, and server-side access controls can still block a download.
+Current test build: **1.2.0** — bundles the Chromium Cronet network stack (HTTP/2 + QUIC) and Media3/ExoPlayer, replays the player's request context, uses bounded Range GETs, verifies that downloaded bytes are a real video container/track before saving, and adds in-app playback. The APK is larger because it now contains real media/network engines, not padding. This still cannot bypass expired signed links, login/app-only restrictions, DRM, or a server's `403` access decision.
 
 Example link included in the app:
 
@@ -18,8 +18,10 @@ Example link included in the app:
 - Open the page in a WebView to capture MP4/WebM/MOV/HLS URLs, including media responses loaded by player `fetch`/XHR in embedded frames
 - **Grab source**: deep-search player globals, inline/JSON code, `data-*` attributes, iframe `srcdoc`, resource timing, and small JSON/JS metadata responses for the original HTTP(S) video URL
 - Explain blob/MSE, WebRTC, and protected playback instead of offering a browser-only `blob:` address as a download
-- Replay the player's captured request headers (never cookies, authorization tokens, or DRM keys) plus bounded Range `GET`s, with a desktop-Chrome fallback, for hotlink/session-checked CDNs
-- Label direct MP4/WebM/MOV responses as video files even when an unrelated query parameter contains `.m3u8`
+- Replay the player's captured request headers (never cookies, authorization tokens, or DRM keys) plus bounded Range `GET`s, with embedded Cronet and desktop-Chrome/platform fallbacks, for hotlink/session-checked CDNs
+- Label direct MP4/WebM/MOV responses as video files even when an unrelated query parameter contains `.m3u8`; `Size not reported yet` means the server has not supplied a length, not that the link is fake
+- Verify downloaded bytes as a video container and, when the device can read it, a real video track; reject HTML/JSON/playlists masquerading as video
+- Play saved videos inside Xtr3 with Media3/ExoPlayer
 - Download direct video files and normal HLS VOD streams
 - HLS MPEG-TS segments, byte ranges, and AES-128 with playlist-provided keys
 - Lossless TS-to-MP4 packaging with Android MediaExtractor/MediaMuxer; if the device cannot package MP4, the app keeps the `.ts` file and tells you
@@ -45,7 +47,7 @@ Every push to `main` or `arena/**`, and every manual **Run workflow**, runs **Bu
 3. In **Artifacts**, download **Xtr3-APK**.
 4. Unzip it and install `Xtr3.apk` on an Android phone. You may need to allow installs from unknown sources for the app used to open the APK.
 
-The workflow fails if the APK is larger than **15,000,000 bytes**. The APK is not padded to reach 15 MB; it stays small because no FFmpeg or Python runtime is bundled. The artifact includes `Xtr3.apk.sha256` for verification and is retained for 14 days.
+The workflow fails if the APK is larger than **50,000,000 bytes**. Since 1.2.0 the APK is intentionally larger because it bundles the embedded Cronet network engine and Media3/ExoPlayer; it is not padded with useless bytes. The artifact includes `Xtr3.apk.sha256` for verification and is retained for 14 days.
 
 **Build type:** the workflow builds `assembleDebug`, signed with the runner's debug key so it can be installed for testing immediately. This is not a Play Store release. Debug keys can differ between runs, so installing over an older build may require uninstalling the old build first. For a public release, add your own private signing configuration and store the keystore in GitHub Secrets, not in the repository.
 
@@ -81,7 +83,8 @@ A `blob:` address is local to the running page and is not an HTTP download link.
 - HLS with separate audio playlists, multiple initialization segments, or fragmented-MP4 discontinuities is not supported in this lightweight build.
 - TS-to-MP4 packaging depends on device codec support. If it fails, the app saves TS instead and does not pretend it is MP4; open it with a player such as VLC.
 - Websites can change their player or expire media URLs. In that case, open the page again and detect a fresh link.
-- `HTTP 403` means the server refused the download. Xtr3 retries with the captured player context and a desktop-Chrome fallback, but it cannot bypass a server's access decision; sign in on the page if required, grab a fresh source, and try again.
+- `HTTP 403` means the server refused the download. Xtr3 retries with the captured player context over embedded Cronet, then desktop/platform fallbacks, but it cannot bypass a server's access decision; sign in on the page if required, grab a fresh source, and try again.
+- `Size not reported yet` is not an “unknown file” verdict. It means the detected URL did not expose a reliable `Content-Length`/total range before download. Xtr3 still verifies the actual bytes before saving.
 - Only download videos you own or have permission to save, and respect the website's terms.
 
 ## Build locally
@@ -96,4 +99,4 @@ node --test tests/*.cjs
 
 Output: `app/build/outputs/apk/debug/app-debug.apk`.
 
-Architecture: native Java Android UI, WebView for link detection, HttpURLConnection for downloads, a small HLS parser, MediaStore for saving, and a foreground service for user-started transfers. Unit tests cover the URL/HTML/HLS parsers; Node tests cover the browser detector, source grabbing, and fetch/XHR/MSE/WebRTC observation. Real website and video playback checks must be done on an Android device.
+Architecture: native Java Android UI, WebView for link detection, embedded Cronet with HttpURLConnection fallback for downloads, a small HLS parser, Media3/ExoPlayer for in-app playback, MediaStore for saving, and a foreground service for user-started transfers. Unit tests cover the URL/HTML/HLS parsers and video-container probing; Node tests cover the browser detector, source grabbing, and fetch/XHR/MSE/WebRTC observation. Real website and video playback checks must be done on an Android device.

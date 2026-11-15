@@ -4,3 +4,7 @@
 }
 -keepattributes JavascriptInterface
 -dontwarn org.jetbrains.annotations.**
+
+# Cronet loads its embedded provider/native bridge reflectively.
+-keep class org.chromium.net.** { *; }
+-dontwarn org.chromium.**

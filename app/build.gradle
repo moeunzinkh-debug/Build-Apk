@@ -10,8 +10,8 @@ android {
         applicationId 'com.xtr3.downloader'
         minSdk 29
         targetSdk 35
-        versionCode 7
-        versionName '1.1.5'
+        versionCode 8
+        versionName '1.2.0'
         resourceConfigurations += ['en', 'km']
     }
 
@@ -42,5 +42,12 @@ android {
 dependencies {
     // Backports document-start scripts to older Android System WebView releases.
     implementation 'androidx.webkit:webkit:1.12.1'
+    implementation 'androidx.annotation:annotation-experimental:1.4.1'
+    // Real bundled Chromium network stack for media transfers (HTTP/2 + QUIC), with a
+    // platform HttpURLConnection fallback. This is functional weight, not padding.
+    implementation 'org.chromium.net:cronet-embedded:141.7340.3'
+    // In-app playback of saved videos and media3 container/track support.
+    implementation 'androidx.media3:media3-exoplayer:1.8.1'
+    implementation 'androidx.media3:media3-ui:1.8.1'
     testImplementation 'junit:junit:4.13.2'
 }

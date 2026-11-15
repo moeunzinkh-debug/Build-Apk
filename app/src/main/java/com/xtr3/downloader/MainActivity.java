@@ -97,7 +97,7 @@ public final class MainActivity extends Activity {
         });
         activeOpen.setOnClickListener(v -> {
             DownloadStore.State s = DownloadStore.state();
-            if (s.finishedUri != null) Ui.openVideo(this, s.finishedUri, s.finishedMime);
+            if (s.finishedUri != null) Ui.openVideo(this, s.finishedUri, s.finishedMime, s.title);
         });
         if (savedInstanceState == null) handleIntent(getIntent());
     }
@@ -222,6 +222,14 @@ public final class MainActivity extends Activity {
         String path = LinkParser.path(c.url);
         int dot = path.lastIndexOf('.');
         if (dot >= 0 && path.length() - dot <= 6) return path.substring(dot + 1).toUpperCase(Locale.ROOT);
+        String mime = c.mime == null ? "" : c.mime.toLowerCase(Locale.ROOT).split(";", 2)[0].trim();
+        if (mime.startsWith("video/")) {
+            String sub = mime.substring(6);
+            String label = sub.equals("mp4") ? "MP4" : sub.equals("webm") ? "WebM"
+                    : sub.equals("quicktime") ? "MOV" : sub.contains("matroska") ? "MKV"
+                    : sub.equals("x-flv") ? "FLV" : sub.equals("mp2t") ? "TS" : sub.toUpperCase(Locale.ROOT);
+            return getString(R.string.format_video_mime, label);
+        }
         return getString(R.string.format_direct);
     }
     private void offerBrowser(String page) {
@@ -327,7 +335,7 @@ public final class MainActivity extends Activity {
             lp.rightMargin = Ui.dp(this, 8);
             open.setLayoutParams(lp);
             delete.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1));
-            open.setOnClickListener(v -> Ui.openVideo(this, r.uri, r.mime));
+            open.setOnClickListener(v -> Ui.openVideo(this, r.uri, r.mime, r.name));
             delete.setOnClickListener(v -> new AlertDialog.Builder(this)
                     .setTitle(R.string.delete).setMessage(R.string.delete_confirm)
                     .setNegativeButton(R.string.cancel, null)
