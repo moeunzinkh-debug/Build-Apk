@@ -19,7 +19,7 @@ public final class LinkParser {
     private static final Pattern LIST_ATTRIBUTE = Pattern.compile(
             "([a-zA-Z0-9_-]+)\\s*=\\s*(?:\"([^\"]*)\"|([^,]*))");
     private static final Pattern JSON_URL = Pattern.compile(
-            "[\"'](?:video_?url|videoUrl|content_?[uU]rl|contentURL|file|src|source|hls|hls_?url|playlist|stream_?url|download_?url|mp4|m3u8)[\"']\\s*:\\s*(?:\"((?:\\\\.|[^\"\\\\])*)\"|'((?:\\\\.|[^'\\\\])*)')",
+            "[\"'](?:video_?url|videoUrl|play_?url|playUrl|vod_?url|vodUrl|content_?[uU]rl|contentURL|file|src|source|hls|hls_?url|playlist|stream_?url|download_?url|mp4|m3u8)[\"']\\s*:\\s*(?:\"((?:\\\\.|[^\"\\\\])*)\"|'((?:\\\\.|[^'\\\\])*)')",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern BARE_URL = Pattern.compile(
             "(?:https?:)?\\\\?/\\\\?/[^\\s\"'<>\\\\]+\\.(?:mp4|m3u8|webm|m4v|mov|ts)(?:[?][^\\s\"'<>\\\\]*)?",
@@ -196,6 +196,10 @@ public final class LinkParser {
                 values.add(attrs.get("data-video"));
                 values.add(attrs.get("data-file"));
                 values.add(attrs.get("data-url"));
+                values.add(attrs.get("data-play-url"));
+                values.add(attrs.get("data-hls"));
+                values.add(attrs.get("data-source"));
+                values.add(attrs.get("data-original"));
                 if (tag.equals("a")) {
                     values.add(attrs.get("href"));
                     if (attrs.containsKey("download")) values.add(attrs.get("data-src"));
@@ -203,7 +207,8 @@ public final class LinkParser {
             }
             for (String value : values) {
                 String url = resolve(pageUrl, value);
-                if (url != null && (isVideo(url, attrs.get("type")) || tag.equals("video")
+                if (url != null && !isFragment(url) && !path(url).endsWith(".mpd") && !isNonMediaUrl(url)
+                        && (isVideo(url, attrs.get("type")) || tag.equals("video")
                         || (tag.equals("meta") && value != null))) {
                     add(found, url, pageUrl, title, attrs.get("type"), label(attrs));
                 }
@@ -213,12 +218,12 @@ public final class LinkParser {
         while (json.find() && found.size() < 24) {
             String value = json.group(1) != null ? json.group(1) : json.group(2);
             String url = resolve(pageUrl, value);
-            if (url != null && isVideo(url, null)) add(found, url, pageUrl, title, null, "");
+            if (url != null && !isFragment(url) && isVideo(url, null)) add(found, url, pageUrl, title, null, "");
         }
         Matcher bare = BARE_URL.matcher(html);
         while (bare.find() && found.size() < 24) {
             String url = resolve(pageUrl, bare.group());
-            if (url != null && isVideo(url, null)) add(found, url, pageUrl, title, null, "");
+            if (url != null && !isFragment(url) && isVideo(url, null)) add(found, url, pageUrl, title, null, "");
         }
         return new ArrayList<>(found.values());
     }

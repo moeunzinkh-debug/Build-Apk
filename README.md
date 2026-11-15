@@ -2,11 +2,13 @@
 
 Xtr3 is a small Android app for pasting a page URL or direct video URL, finding the video, and saving it to `Movies/Xtr3`.
 
+Current test build: **1.1.4** — adds **Grab source** for deeper original-video URL discovery in the page detector.
+
 Example link included in the app:
 
 `https://xstree.com/vplay/35835513.html`
 
-> សំខាន់៖ ទំព័រឧទាហរណ៍នេះជា JavaScript shell; HTML ដំបូងបង្ហាញតែ “加载中” (កំពុងផ្ទុក)។ ដូច្នេះ **Find video** ធម្មតាអាចមិនឃើញ player ទេ។ សូមប្រើ **Open page detector** ហើយចុច Play ម្តង។ បើនៅតែមិនឃើញ បើក **Developer options** ដើម្បីកត់ត្រា request ហើយផ្ញើ log មកពិនិត្យ។ មិនធានាថាគ្រប់វីដេអូលើ xstree.com អាចទាញយកបានទេ។
+> សំខាន់៖ ទំព័រឧទាហរណ៍នេះជា JavaScript shell; HTML ដំបូងបង្ហាញតែ “加载中” (កំពុងផ្ទុក)។ ដូច្នេះ **Find video** ធម្មតាអាចមិនឃើញ player ទេ។ សូមប្រើ **Open page detector** ចុច Play ម្តង រួចចុច **Grab source** ដើម្បីស្វែងរកតំណវីដេអូដើមនៅក្នុងកូដ player និងទិន្នន័យបណ្តាញ។ បើនៅតែមិនឃើញ បើក **Developer options** ដើម្បីកត់ត្រា request ហើយផ្ញើ log មកពិនិត្យ។ មិនធានាថាគ្រប់វីដេអូលើ xstree.com អាចទាញយកបានទេ។
 
 ## Features
 
@@ -14,6 +16,7 @@ Example link included in the app:
 - Paste a page URL or direct video URL
 - Find links in `<video>`, `<source>`, OpenGraph metadata, JSON, and HTML
 - Open the page in a WebView to capture MP4/WebM/MOV/HLS URLs, including media responses loaded by player `fetch`/XHR in embedded frames
+- **Grab source**: deep-search player globals, inline/JSON code, `data-*` attributes, iframe `srcdoc`, resource timing, and small JSON/JS metadata responses for the original HTTP(S) video URL
 - Explain blob/MSE, WebRTC, and protected playback instead of offering a browser-only `blob:` address as a download
 - Download direct video files and normal HLS VOD streams
 - HLS MPEG-TS segments, byte ranges, and AES-128 with playlist-provided keys
@@ -49,13 +52,13 @@ The workflow fails if the APK is larger than **15,000,000 bytes**. The APK is no
 1. Open **Xtr3**.
 2. Tap **Use example link** or paste another URL.
 3. Tap **Find video**. If a video link is found, tap **Download** on the one you want.
-4. If nothing is found, tap **Open page detector**. On the page that opens, press Play once. **Choose video** stays dimmed and says **No video link** until a real HTTP(S) file or playlist is found. A playing picture alone is not enough: the player may use a temporary browser buffer or a peer connection.
+4. If nothing is found, tap **Open page detector**. On the page that opens, press Play once, then tap **Grab source**. Xtr3 deep-searches the player code, page code, and small network metadata responses for the original video URL. **Choose video** stays dimmed and says **No video link** until a real HTTP(S) file or playlist is found. A playing picture alone is not enough: the player may use a temporary browser buffer or a peer connection.
 5. Watch progress. When finished, tap **Open** or find the file in **My videos** / `Movies/Xtr3`.
 
 ## Developer mode / ពិនិត្យពេលរកវីដេអូមិនឃើញ
 
 1. In Xtr3, tap **Developer options** and enable the switch.
-2. Tap **Open detector**, load the page, and press Play once. If the site pushes its own app instead of playing (common on Android), tap **Desktop** in the top bar to request the desktop site, then press Play again.
+2. Tap **Open detector**, load the page, press Play once, then tap **Grab source**. If the site pushes its own app instead of playing (common on Android), tap **Desktop** in the top bar to request the desktop site, then press Play and Grab source again.
 3. Return to **Developer options** and tap **Copy log** or **Share log**. The log shows page loads, network requests, console messages, detector traces, and detected media URLs.
 4. For deeper inspection: enable Android **USB debugging**, connect the phone to a computer, open `chrome://inspect/#devices` in desktop Chrome, inspect the Xtr3 WebView, and watch the **Network** and **Media** panels while the video plays.
 
@@ -65,13 +68,14 @@ The detector ignores website API calls such as `video/detail`, `hot_search`, `rt
 
 Some sites (including xstree on Android) push their own app to mobile browsers. The **Desktop** toggle requests the desktop version of the site, the same way Chrome's "Desktop site" does. Playback succeeding in Desktop mode does **not** guarantee that a downloadable URL exists.
 
-Since 1.1.3, a passive document-start observer watches player fetch/XHR response URLs and Content-Type metadata in embedded frames on supported Android System WebView versions. It does not read media bodies, credentials, or DRM keys. It also records whether video uses blob/MSE, WebRTC `MediaStream`, or protected media. Older WebView versions fall back to main-frame scanning. Repeated polling messages are deduplicated so important player events remain in the log.
+Since 1.1.3, a passive document-start observer watches player fetch/XHR response URLs and Content-Type metadata in embedded frames on supported Android System WebView versions. Since 1.1.4, **Grab source** also deep-searches player globals, inline/JSON code, `data-*` attributes, iframe `srcdoc`, resource timing, and small JSON/JS/text metadata responses. Metadata cloning is bounded (256 KiB per response, 24 responses per frame) and skips sensitive keys such as token/password/license/DRM. Xtr3 does not read media bodies or request bodies, does not record the screen, and does not bypass DRM. It also records whether video uses blob/MSE, WebRTC `MediaStream`, or protected media. Older WebView versions fall back to main-frame scanning. Repeated polling messages are deduplicated so important player events remain in the log.
 
 A `blob:` address is local to the running page and is not an HTTP download link. MSE assembles media inside the browser; WebRTC delivers a peer stream. Xtr3 can offer a download only when it also finds the underlying HTTP(S) video file or supported playlist. If only fragments or a protected/peer stream are available, it explains that rather than enabling an empty choice. This improves diagnosis but does not guarantee downloading from every player.
 
 ## Limitations
 
 - No DRM/Widevine, SAMPLE-AES, special-access videos you are not authorized to save, or live HLS streams without `ENDLIST`.
+- MPEG-DASH (`.mpd`) may appear in diagnostics, but this build downloads direct files and HLS only; it does not offer a DASH manifest as a fake video file.
 - HLS with separate audio playlists, multiple initialization segments, or fragmented-MP4 discontinuities is not supported in this lightweight build.
 - TS-to-MP4 packaging depends on device codec support. If it fails, the app saves TS instead and does not pretend it is MP4; open it with a player such as VLC.
 - Websites can change their player or expire media URLs. In that case, open the page again and detect a fresh link.
@@ -89,4 +93,4 @@ node --test tests/*.cjs
 
 Output: `app/build/outputs/apk/debug/app-debug.apk`.
 
-Architecture: native Java Android UI, WebView for link detection, HttpURLConnection for downloads, a small HLS parser, MediaStore for saving, and a foreground service for user-started transfers. Unit tests cover the URL/HTML/HLS parsers; Node tests cover the browser detector and passive fetch/XHR/MSE/WebRTC observer. Real website and video playback checks must be done on an Android device.
+Architecture: native Java Android UI, WebView for link detection, HttpURLConnection for downloads, a small HLS parser, MediaStore for saving, and a foreground service for user-started transfers. Unit tests cover the URL/HTML/HLS parsers; Node tests cover the browser detector, source grabbing, and fetch/XHR/MSE/WebRTC observation. Real website and video playback checks must be done on an Android device.

@@ -102,4 +102,29 @@ public class LinkParserTest {
         assertEquals("a&b", LinkParser.attributes("src=\"a&amp;b\"").get("src"));
         assertEquals("720p", LinkParser.attributes("label='720p'").get("label"));
     }
+    @Test public void extractsPlayerConfigUrlKeys() {
+        List<MediaCandidate> list = LinkParser.extract(
+                "{\"play_url\":\"https:\\/\\/cdn.test\\/play.m3u8\",\"vod_url\":\"https:\\/\\/cdn.test\\/vod.mp4\"}", PAGE);
+        assertEquals(2, list.size());
+        assertEquals(MediaCandidate.HLS, list.get(0).kind);
+        assertEquals(MediaCandidate.DIRECT, list.get(1).kind);
+    }
+    @Test public void extractsPlayerDataAttributes() {
+        List<MediaCandidate> list = LinkParser.extract(
+                "<video data-play-url='https://cdn.test/a.mp4'></video>"
+                + "<source data-hls='https://cdn.test/b.m3u8'>"
+                + "<iframe data-source='https://cdn.test/c.webm'></iframe>"
+                + "<a data-original='https://cdn.test/d.mov'>movie</a>", PAGE);
+        assertEquals(4, list.size());
+        assertEquals(MediaCandidate.HLS, list.get(1).kind);
+    }
+    @Test public void extractionSkipsFragmentsAndDash() {
+        List<MediaCandidate> list = LinkParser.extract(
+                "<video src='https://cdn.test/seg.ts'></video>"
+                + "<video src='https://cdn.test/manifest.mpd'></video>"
+                + "<script>{\"src\":\"https://cdn.test/seg2.ts\"}</script>"
+                + "<a href='https://cdn.test/movie.mp4'>movie</a>", PAGE);
+        assertEquals(1, list.size());
+        assertEquals("https://cdn.test/movie.mp4", list.get(0).url);
+    }
 }

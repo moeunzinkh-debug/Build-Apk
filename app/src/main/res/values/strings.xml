@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name" translatable="false">Xtr3</string>
     <string name="example_url" translatable="false">https://xstree.com/vplay/35835513.html</string>
-    <string name="version" translatable="false">Xtr3 1.1.3 · Android 10+</string>
+    <string name="version" translatable="false">Xtr3 1.1.4 · Android 10+</string>
     <string name="tagline">Paste a link. Save the video.</string>
     <string name="tab_new">New download</string>
     <string name="tab_library">My videos</string>
@@ -16,7 +16,7 @@
     <string name="analysing">Checking the link…</string>
     <string name="found_videos">Video links found — choose one below.</string>
     <string name="no_media_title">No direct video link found</string>
-    <string name="no_media_body">The page may load its player with JavaScript. Open the page detector, press Play once, then choose the detected video.</string>
+    <string name="no_media_body">The page may load its player with JavaScript. Open the page detector, press Play once, then tap Grab source to search the player code and network metadata for the original video URL.</string>
     <string name="download">Download</string>
     <string name="cancel">Cancel</string>
     <string name="close">Close</string>
@@ -59,10 +59,10 @@
     <string name="error_timeout">The server took too long to respond. Try again.</string>
     <string name="error_generic">Could not download this video. Try detecting a fresh link from the page.</string>
     <string name="browser_title">Page detector</string>
-    <string name="browser_hint">Press Play on the page. Xtr3 will list public video URLs requested by the player.</string>
-    <string name="browser_scan">Scan again</string>
-    <string name="browser_found">%1$d video link(s) detected</string>
-    <string name="browser_none">No video link yet. Press Play in the page. If it shows an error, login/app-only/DRM message, open Log.</string>
+    <string name="browser_hint">Press Play, then Grab source. Xtr3 searches the player, page code and network metadata for the original video URL.</string>
+    <string name="browser_scan">Grab source</string>
+    <string name="browser_found">%1$d video source(s) detected</string>
+    <string name="browser_none">No video source yet. Press Play, then Grab source. If the page shows an error, login/app-only/DRM message, open Log.</string>
     <string name="browser_blocked_app">This page tried to download an Android app, not a video. Xtr3 blocked it.</string>
     <string name="browser_back">Back</string>
     <string name="browser_reload">Reload</string>
@@ -89,7 +89,7 @@
     <string name="developer_status_off">Logging is OFF.</string>
     <string name="developer_remote_on">WebView remote debugging is ON for this debug build. Use chrome://inspect/#devices on a computer.</string>
     <string name="developer_remote_off">WebView remote debugging is OFF.</string>
-    <string name="developer_instructions">1) Enable the switch. 2) Open the page detector and press Play. 3) Come back here and Copy/Share the log. For USB inspection: enable Android USB debugging, connect to a computer, open chrome://inspect/#devices in Chrome, inspect Xtr3, and watch Network/Media.</string>
+    <string name="developer_instructions">1) Enable the switch. 2) Open the page detector, press Play, then tap Grab source. 3) Come back here and Copy/Share the log. For USB inspection: enable Android USB debugging, connect to a computer, open chrome://inspect/#devices in Chrome, inspect Xtr3, and watch Network/Media.</string>
     <string name="developer_privacy">Logs redact common token/password fields, but may still contain page text and media URLs. Share only with people you trust.</string>
     <string name="developer_open_detector">Open detector</string>
     <string name="developer_refresh">Refresh</string>
@@ -104,5 +104,5 @@
     <string name="browser_desktop_on">Desktop ✓</string>
     <string name="browser_gate_app">This site says: play only in its own app, and it never gives the browser a video URL. Try Desktop mode; if it still blocks, Xtr3 cannot save this page.</string>
     <string name="browser_gate_drm">The player reports DRM/protected playback. Xtr3 cannot save DRM-protected streams.</string>
-    <string name="browser_gate_login">The site asks you to sign in before playing. Sign in on the page, then scan again.</string>
+    <string name="browser_gate_login">The site asks you to sign in before playing. Sign in on the page, then press Grab source again.</string>
 </resources>

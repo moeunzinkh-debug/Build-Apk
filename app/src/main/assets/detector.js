@@ -149,6 +149,8 @@
   } catch (e) {}
   try {
     if (window.__xtr3Observer) {
+      // Deep grab: player globals, inline/JSON code, data attributes, srcdoc and resource timing.
+      if (typeof window.__xtr3Observer.grab === 'function') window.__xtr3Observer.grab();
       var observed = window.__xtr3Observer.collect();
       for (var oi = 0; oi < observed.length; oi++) addObserved(observed[oi]);
       trace.playback = window.__xtr3Observer.snapshot();

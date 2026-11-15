@@ -161,3 +161,16 @@ test('caps results to avoid bridge flooding', () => {
   const resources = Array.from({length: 50}, (_, i) => `https://cdn.test/${i}.mp4`);
   assert.equal(run({resources}).reported.length, 24);
 });
+
+test('invokes the observer deep grab and merges grabbed sources', () => {
+  let grabbed = 0;
+  const {reported} = run({windowProps: {__xtr3Observer: {
+    grab: () => { grabbed++; },
+    collect: () => [{url: 'https://cdn.test/grabbed.mp4', kind: 'video', mime: 'video/mp4'}],
+    snapshot: () => ({buffered: false, peer: false, protected: false})
+  }}});
+  assert.equal(grabbed, 1);
+  assert.equal(reported.length, 1);
+  assert.equal(reported[0].url, 'https://cdn.test/grabbed.mp4');
+  assert.equal(reported[0].mime, 'video/mp4');
+});

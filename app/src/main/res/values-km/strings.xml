@@ -13,7 +13,7 @@
     <string name="analysing">កំពុងពិនិត្យតំណ…</string>
     <string name="found_videos">រកឃើញតំណវីដេអូ — ជ្រើសរើសខាងក្រោម។</string>
     <string name="no_media_title">រកមិនឃើញតំណវីដេអូផ្ទាល់</string>
-    <string name="no_media_body">ទំព័រនេះអាចបង្កើត player ដោយ JavaScript។ បើកទំព័រស្វែងរក ចុច Play ម្តង រួចជ្រើសរើសវីដេអូដែលរកឃើញ។</string>
+    <string name="no_media_body">ទំព័រនេះអាចបង្កើត player ដោយ JavaScript។ បើកទំព័រស្វែងរក ចុច Play ម្តង រួចចុច Grab source ដើម្បីស្វែងរកតំណវីដេអូដើមនៅក្នុងកូដ player និងទិន្នន័យបណ្តាញ។</string>
     <string name="download">ទាញយក</string>
     <string name="cancel">បោះបង់</string>
     <string name="close">បិទ</string>
@@ -24,7 +24,7 @@
     <string name="download_started">បានចាប់ផ្តើមទាញយក។ ទុក Xtr3 ដំណើរការនៅផ្ទៃខាងក្រោយ។</string>
     <string name="already_downloading">កំពុងទាញយកវីដេអូមួយរួចហើយ។</string>
     <string name="library_empty_title">វីដេអូរបស់អ្នកនឹងបង្ហាញនៅទីនេះ</string>
-    <string name="library_empty_body">ឯកសារដែលបានរក្សាទុកស្ថិតនៅ Movies/Xtr3 ហើយក៏អាចមើលបានក្នុង Gallery ឬកម្មវិធីគ្ប់គ្រងកសារ។</string>
+    <string name="library_empty_body">ឯកសារដែលបានរក្សាទុកស្ថិតនៅ Movies/Xtr3 ហើយក៏អាចមើលបានក្នុង Gallery ឬកម្មវិធីគ្រប់គ្រងឯកសារ។</string>
     <string name="delete_confirm">លុបវីដេអូដែលបានរក្សាទុកនេះពីឧបករណ៍?</string>
     <string name="deleted">បានលុបវីដេអូ។</string>
     <string name="delete_failed">មិនអាចលុបឯកសារបានទេ។ ឯកសារនេះប្រហែលជាត្រូវបានលុបរួចហើយ។</string>
@@ -49,17 +49,17 @@
     <string name="phase_done">បានរក្សាទុកវីដេអូ</string>
     <string name="phase_failed">ការទាញយកបរាជ័យ</string>
     <string name="phase_cancelled">បានបោះបង់ការទាញយក</string>
-    <string name="phase_retry">ការតភ្ជាប់ដាច់។ កំពុងព្យាយាមម្តងទត…</string>
+    <string name="phase_retry">ការតភ្ជាប់ដាច់។ កំពុងព្យាយាមម្តងទៀត…</string>
     <string name="convert_detail">បំលែងដោយមិនបាត់បង់គុណភាពលើឧបករណ៍របស់អ្នក</string>
     <string name="saved_as_ts">បានរក្សាទុកជា TS ព្រោះឧបករណ៍នេះមិនអាចរៀបចំជា MP4 បាន។ បើ Gallery ចាក់មិនបាន សូមបើកជាមួយ VLC។</string>
     <string name="error_network">មិនអាចភ្ជាប់ទៅម៉ាស៊ីនមេបានទេ។ ពិនិត្យអ៊ីនធឺណិត និងតំណភ្ជាប់។</string>
     <string name="error_timeout">ម៉ាស៊ីនមេឆ្លើយតបយឺតពេក។ សូមព្យាយាមម្តងទៀត។</string>
     <string name="error_generic">មិនអាចទាញយកវីដេអូនេះបានទេ។ សាកល្បងស្វែងរកតំណថ្មីពីទំព័រ។</string>
     <string name="browser_title">ទំព័រស្វែងរកវីដេអូ</string>
-    <string name="browser_hint">ចុច Play លើទំព័រ។ Xtr3 នឹងបង្ហាញតំណវីដេអូសាធារណៈដែល player ស្នើសុំ។</string>
-    <string name="browser_scan">ស្វែងរកម្តងទៀត</string>
-    <string name="browser_found">រកឃើញតំណវីដេអូ %1$d</string>
-    <string name="browser_none">មិនទាន់មានតំណវីដេអូ។ ចុច Play ក្នុងទំព័រ។ បើវាបង្ហាញ error, ឱ្យចូលគណនី/ប្រើ app ឬ DRM សូមបើក Log។</string>
+    <string name="browser_hint">ចុច Play រួចចុច Grab source។ Xtr3 ស្វែងរកតំណវីដេអូដើមនៅក្នុង player, កូដទំព័រ និងទិន្នន័យបណ្តាញ។</string>
+    <string name="browser_scan">Grab source</string>
+    <string name="browser_found">រកឃើញប្រភពវីដេអូ %1$d</string>
+    <string name="browser_none">មិនទាន់មានប្រភពវីដេអូ។ ចុច Play រួចចុច Grab source។ បើទំព័របង្ហាញកំហុស ឬសារឱ្យចូលគណនី/ប្រើ app/DRM សូមបើកកំណត់ហេតុ។</string>
     <string name="browser_blocked_app">ទំព័រនេះព្យាយាមទាញយក Android app មិនមែនវីដេអូទេ។ Xtr3 បានរារាំងវា។</string>
     <string name="browser_back">ត្រឡប់</string>
     <string name="browser_reload">ផ្ទុកឡើងវិញ</string>
@@ -70,7 +70,7 @@
     <string name="browser_protected">Player រាយការណ៍ថាវីដេអូមានការការពារ/DRM។ Xtr3 មិនអាចរក្សាទុក stream ដែលបានការពារទេ។</string>
     <string name="browser_loading">កំពុងផ្ទុកទំព័រ…</string>
     <string name="browser_ssl_error">វិញ្ញាបនបត្រសុវត្ថិភាពរបស់គេហទំព័រមិនត្រឹមត្រូវទេ។ បានបញ្ឈប់ការផ្ទុក។</string>
-    <string name="browser_page_error">មិនអាចផ្ទុកទំព័របានទេ។ ពិនិត្យតំណ ឬការតភ្ជាប់អីនធឺណិត។</string>
+    <string name="browser_page_error">មិនអាចផ្ទុកទំព័របានទេ។ ពិនិត្យតំណ ឬការតភ្ជាប់អ៊ីនធឺណិត។</string>
     <string name="choose_video">ជ្រើសរើសតំណវីដេអូ</string>
     <string name="progress_detail">%1$d%% · %2$s</string>
     <string name="progress_unknown">%1$d%%</string>
@@ -80,13 +80,13 @@
     <string name="analysis_cancelled">បានបោះបង់ការពិនិត្យតំណ។</string>
     <string name="browser_login_hint">បើគេហទំព័រតម្រូវឱ្យមានគណនី សូមចូលគណនីលើទំព័រជាមុនសិន។ Xtr3 មិនឆ្លងកាត់ការការពារសិទ្ធិចូលប្រើទេ។</string>
     <string name="developer_options">ជម្រើសអភិវឌ្ឍន៍</string>
-    <string name="developer_title">របៀបអភិវឌ្ឍន</string>
+    <string name="developer_title">របៀបអភិវឌ្ឍន៍</string>
     <string name="developer_switch">បើកកំណត់ហេតុ + WebView debugging</string>
     <string name="developer_status_on">កំពុងកត់ត្រា។</string>
     <string name="developer_status_off">មិនកត់ត្រា។</string>
-    <string name="developer_remote_on">WebView remote debugging កំពុងបើកសម្រាប់ debug build នេះ។ ប្រើ chrome://inspect/#devices លើកុំព្យូទរ។</string>
+    <string name="developer_remote_on">WebView remote debugging កំពុងបើកសម្រាប់ debug build នេះ។ ប្រើ chrome://inspect/#devices លើកុំព្យូទ័រ។</string>
     <string name="developer_remote_off">WebView remote debugging កំពុងបិទ។</string>
-    <string name="developer_instructions">១) បើកកុងតាក់នេះ។ ២) បើកទំព័រស្វែងរក ហើយចុច Play។ ៣) ត្រឡប់មកទីនេះ ហើយចម្លង/ចែករំលែកកំណត់ហេតុ។ សម្រាប់មើលតាម USB៖ បើក USB debugging លើ Android, ភ្ជាប់ទៅកុំព្យូទ័រ, បើក chrome://inspect/#devices ក្នុង Chrome, inspect Xtr3, ហើយមើល Network/Media។</string>
+    <string name="developer_instructions">១) បើកកុងតាក់នេះ។ ២) បើកទំព័រស្វែងរក ចុច Play រួចចុច Grab source។ ៣) ត្រឡប់មកទីនេះ ហើយចម្លង/ចែករំលែកកំណត់ហេតុ។ សម្រាប់មើលតាម USB៖ បើក USB debugging លើ Android, ភ្ជាប់ទៅកុំព្យូទ័រ, បើក chrome://inspect/#devices ក្នុង Chrome, inspect Xtr3, ហើយមើល Network/Media។</string>
     <string name="developer_privacy">កំណត់ហេតុលាក់វាល token/password ទូទៅ ប៉ុន្តែអាចនៅមានអត្ថបទទំព័រ និងតំណវីដេអូ។ ចែករំលែកតែជាមួយអ្នកដែលអ្នកទុកចិត្ត។</string>
     <string name="developer_open_detector">បើកទំព័រស្វែងរក</string>
     <string name="developer_refresh">ផ្ទុកឡើងវិញ</string>
@@ -101,5 +101,5 @@
     <string name="browser_desktop_on">Desktop ✓</string>
     <string name="browser_gate_app">គេហទំព័រនេះប្រាប់ថា ចាក់បានតែក្នុង app របស់វាប៉ុណ្ណោះ ហើយមិនផ្ញើតំណវីដេអូឱ្យ browser ទេ។ សាកល្បង Desktop mode; បើនៅតែរារាំង Xtr3 មិនអាចរក្សាទុកទំព័រនេះបានទេ។</string>
     <string name="browser_gate_drm">Player រាយការណ៍ DRM/ការការពារ។ Xtr3 មិនអាចរក្សាទុក stream ដែលការពារដោយ DRM បានទេ។</string>
-    <string name="browser_gate_login">គេហទំព័រតម្រូវ្យចូលគណនីមុនចាក់។ ចូលគណនីក្នុងទំព័រ រួចស្កេនម្តងទត។</string>
+    <string name="browser_gate_login">គេហទំព័រតម្រូវឱ្យចូលគណនីមុនចាក់។ ចូលគណនីក្នុងទំព័រ រួចចុច Grab source ម្តងទៀត។</string>
 </resources>

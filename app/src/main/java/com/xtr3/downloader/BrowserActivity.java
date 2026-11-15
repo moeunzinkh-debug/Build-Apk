@@ -82,7 +82,7 @@ public final class BrowserActivity extends Activity {
         web = findViewById(R.id.webview);
         findViewById(R.id.browser_back).setOnClickListener(v -> back());
         findViewById(R.id.browser_reload).setOnClickListener(v -> { Diagnostics.log("DEV", "Reload"); web.reload(); });
-        findViewById(R.id.browser_scan).setOnClickListener(v -> { Diagnostics.log("DEV", "Manual scan"); scan(); });
+        findViewById(R.id.browser_scan).setOnClickListener(v -> { Diagnostics.log("DEV", "Grab source"); grabSource(); });
         desktopMode = getSharedPreferences("browser", MODE_PRIVATE).getBoolean("desktopMode", false);
         desktopButton = findViewById(R.id.browser_desktop);
         desktopButton.setOnClickListener(v -> toggleDesktop());
@@ -281,7 +281,9 @@ public final class BrowserActivity extends Activity {
         if (!trustedVideo && !detected(url, mime)) return;
         String normalized;
         try { normalized = LinkParser.normalize(url); } catch (IllegalArgumentException e) { return; }
-        if (LinkParser.isFragment(normalized) || LinkParser.path(normalized).endsWith(".mpd")) return;
+        if (LinkParser.isFragment(normalized) || LinkParser.path(normalized).endsWith(".mpd")
+                || LinkParser.isNonMediaUrl(normalized)
+                || (mime != null && LinkParser.isKnownNonMediaMime(mime))) return;
         synchronized (candidates) {
             if (candidates.containsKey(normalized) || candidates.size() >= 24) return;
             MediaCandidate c = new MediaCandidate(normalized, page == null ? originalUrl : page,
@@ -320,6 +322,14 @@ public final class BrowserActivity extends Activity {
             // Also installs a main-frame fallback on older WebView versions.
             web.evaluateJavascript(observerScript + "\n" + detectorScript, null);
         }
+    }
+    private void grabSource() {
+        if (web == null) return;
+        // Deep source grab in the main frame: player globals, inline/JSON code, data attributes,
+        // iframe srcdoc and resource timing. Embedded frames also grab on load/playing via observer.
+        web.evaluateJavascript("window.__xtr3Observer && window.__xtr3Observer.grab ? window.__xtr3Observer.grab(true) : null", null);
+        scan();
+        main.postDelayed(this::updateCount, 1200);
     }
     private void chooseCandidate() {
         List<MediaCandidate> list;
@@ -384,7 +394,11 @@ public final class BrowserActivity extends Activity {
                 if (mime.isEmpty()) mime = null;
                 if (!detected(url, mime)) return;
                 String source = o.optString("source", "player");
-                Diagnostics.log("PLAYER_NET", ("fetch".equals(source) || "xhr".equals(source) ? source : "player") + " " + url);
+                if (source.length() > 24 || !source.matches("[a-z-]+")) source = "player";
+                Diagnostics.log("PLAYER_NET", source + " " + url);
+                if (source.endsWith("-code") || "player-config".equals(source) || "dom-code".equals(source)) {
+                    Diagnostics.log("GRAB", "Source grabbed from " + source + ": " + url);
+                }
                 add(url, mime, null, currentPage, false);
             } catch (org.json.JSONException | RuntimeException e) {
                 Diagnostics.log("JS", "Rejected invalid player network report");
