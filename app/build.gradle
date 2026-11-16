@@ -10,8 +10,8 @@ android {
         applicationId 'com.xtr3.downloader'
         minSdk 29
         targetSdk 35
-        versionCode 12
-        versionName '1.5.0'
+        versionCode 13
+        versionName '1.6.0'
         resourceConfigurations += ['en', 'km']
         // ABI selection lives in splits.abi below; ndk.abiFilters must not also be set.
     }

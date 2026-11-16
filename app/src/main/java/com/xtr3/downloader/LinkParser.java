@@ -230,6 +230,12 @@ public final class LinkParser {
             String url = resolve(pageUrl, value);
             if (url != null && !isFragment(url) && isVideo(url, null)) add(found, url, pageUrl, title, null, "");
         }
+        Matcher assign = SCRIPT_ASSIGN_URL.matcher(html);
+        while (assign.find() && found.size() < 24) {
+            String value = assign.group(1) != null ? assign.group(1) : assign.group(2);
+            String url = resolve(pageUrl, value);
+            if (url != null && !isFragment(url) && isVideo(url, null)) add(found, url, pageUrl, title, null, "");
+        }
         Matcher bare = BARE_URL.matcher(html);
         while (bare.find() && found.size() < 24) {
             String url = resolve(pageUrl, bare.group());

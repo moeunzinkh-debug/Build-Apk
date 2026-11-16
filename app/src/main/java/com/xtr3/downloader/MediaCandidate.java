@@ -64,6 +64,7 @@ public final class MediaCandidate implements Serializable {
     public void selectQuality(Quality quality) {
         selectedQuality = quality;
         if (quality == null) return;
+        if (DIRECT.equals(kind) && quality.url != null && !quality.url.isEmpty()) this.url = quality.url;
         if (quality.quality != null && !quality.quality.isEmpty()) this.quality = quality.quality;
         else if (quality.label != null && !quality.label.isEmpty()) this.quality = quality.label;
         size = quality.size > 0 ? quality.size : -1;

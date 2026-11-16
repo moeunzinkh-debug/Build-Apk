@@ -2,14 +2,14 @@
 
 Xtr3 is a small Android app for pasting a page URL or direct video URL, finding the video, and saving it to `Movies/Xtr3`.
 
-Current test build: **1.5.0** — adds a **pre-download quality picker** for public, non-DRM **Bilibili/B23, Facebook, YouTube, TikTok and TikTok drama episode** links using bundled yt-dlp 2026.10.26, Python, QuickJS, yt-dlp-ejs and FFmpeg. It keeps the Cronet/Media3 engine from 1.2.0 for ordinary pages/direct/HLS links, verifies downloaded bytes, and plays saved videos in-app. Since 1.3.1 the workflow builds a minified **release** and splits it into one APK per CPU ABI (arm64-v8a, armeabi-v7a, x86_64), so a phone installs only the native engines it can run instead of one ~167 MB universal file. The weight is real extraction/merge/playback engine code, not padding. It does not read browser cookies or bypass DRM, paid memberships, login-only/private videos, or live streams.
+Current test build: **1.6.0** — adds **TikWM API (`tikwm.com/api/`)** ahead of **SSSTik** in the opt-out TikTok / micro-drama fallback chain, with **HD / Standard / Watermarked MP4 quality selection** when TikWM reports distinct streams, plus inline script variable extraction (`var videoUrl = ...`) in `LinkParser`. Retains the **pre-download quality picker** from 1.5.0 for public, non-DRM **Bilibili/B23, Facebook, YouTube, TikTok and TikTok drama episode** links using bundled yt-dlp 2026.10.26, Python, QuickJS, yt-dlp-ejs and FFmpeg, and keeps the Cronet/Media3 engine for ordinary pages/direct/HLS links. Since 1.3.1 the workflow builds a minified **release** and splits it into one APK per CPU ABI (arm64-v8a, armeabi-v7a, x86_64), so a phone installs only the native engines it can run instead of one ~167 MB universal file. The weight is real extraction/merge/playback engine code, not padding. It does not read browser cookies or bypass DRM, paid memberships, login-only/private videos, or live streams.
 
-Since 1.4.0 there is also an opt-out **TikTok micro-drama fallback**: TikTok's newer
-`/shortdrama/episode/...` links have no yt-dlp extractor, so when the bundled engine
-cannot read a TikTok link Xtr3 can resolve it through the same public form flow a
-browser uses on ssstik.io, then download the direct MP4 from TikTok's own CDN.
-It stops honestly at a bot challenge, reads no browser or TikTok cookies, and can be
-turned off in **Developer options**. See [docs/ssstik-fallback.md](docs/ssstik-fallback.md).
+Since 1.4.0 (expanded in **1.6.0**) there is an opt-out **TikTok micro-drama fallback** chain:
+TikTok's newer `/shortdrama/episode/...` links have no yt-dlp extractor, so when the bundled
+engine cannot read a TikTok link Xtr3 queries **TikWM's public JSON API** first (supporting
+HD/Standard no-watermark MP4 options with reported sizes) and falls back to **SSSTik's** public
+form flow if needed. Both stop honestly at a bot challenge, read no browser or TikTok cookies,
+and can be turned off independently in **Developer options**. See [docs/ssstik-fallback.md](docs/ssstik-fallback.md).
 
 Example link included in the app:
 

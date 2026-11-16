@@ -23,9 +23,10 @@ The default choice prefers a quality with audio at or below 1080p; the menu can 
 
 For an HLS master playlist, Xtr3 lists the actual `EXT-X-STREAM-INF` variants instead of silently downloading the highest bandwidth. The default is the highest-bandwidth variant with combined audio/video. Variants that require a separate audio playlist are not offered by the lightweight HLS path. The selected variant URL is passed to the HLS downloader. If that chosen URL unexpectedly points at another master playlist, Xtr3 stops and asks you to find the video again rather than silently switching to a different quality.
 
-## Direct files / SSSTik fallback
+## Direct files / TikWM & SSSTik fallbacks
 
-A direct MP4/WebM/MOV URL or the SSSTik micro-drama fallback exposes one media file, not a format ladder. Xtr3 shows the detected file type and size when available, then asks for download confirmation. It does not invent fake quality choices.
+- **TikWM fallback (`TikwmResolver`)**: requests `hd=1` on TikWM's public JSON endpoint and builds real selectable options whenever distinct HTTPS video streams are returned (`HD (no watermark) · MP4`, `Standard (no watermark) · MP4`, and `Watermarked · MP4`), including `hd_size` / `size` / `wm_size` when reported. Identical URLs are deduplicated so fake duplicate choices are never shown.
+- **Direct files & SSSTik fallback (`SsstikResolver`)**: an ordinary MP4/WebM/MOV URL or the SSSTik HTML fragment exposes one media file, not a format ladder. Xtr3 shows the detected file type and size when available, then asks for download confirmation.
 
 ## Limits
 
