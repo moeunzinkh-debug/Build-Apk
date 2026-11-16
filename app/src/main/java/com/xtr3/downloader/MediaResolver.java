@@ -184,6 +184,7 @@ public final class MediaResolver {
             case "login":
             case "protected":
             case "live":
+                return 5;
             case "unavailable":
                 return 4;
             case "rate":
