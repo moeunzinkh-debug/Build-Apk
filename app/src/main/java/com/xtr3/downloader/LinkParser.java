@@ -21,8 +21,11 @@ public final class LinkParser {
     private static final Pattern JSON_URL = Pattern.compile(
             "[\"'](?:video_?url|videoUrl|play_?url|playUrl|vod_?url|vodUrl|content_?[uU]rl|contentURL|file|src|source|hls|hls_?url|playlist|stream_?url|download_?url|mp4|m3u8)[\"']\\s*:\\s*(?:\"((?:\\\\.|[^\"\\\\])*)\"|'((?:\\\\.|[^'\\\\])*)')",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern SCRIPT_ASSIGN_URL = Pattern.compile(
+            "(?:\\b(?:var|let|const)\\s+|[{,;\\s])(?:video_?url|videoUrl|play_?url|playUrl|vod_?url|vodUrl|content_?[uU]rl|contentURL|hls_?url|hlsUrl|stream_?url|streamUrl|download_?url|downloadUrl|mp4_?url|m3u8_?url)\\s*[:=]\\s*(?:\"((?:\\\\.|[^\"\\\\])*)\"|'((?:\\\\.|[^'\\\\])*)')",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern BARE_URL = Pattern.compile(
-            "(?:https?:)?\\\\?/\\\\?/[^\\s\"'<>\\\\]+\\.(?:mp4|m3u8|webm|m4v|mov|ts)(?:[?][^\\s\"'<>\\\\]*)?",
+            "(?:https?:)?\\\\?/\\\\?/[^\\s\"'<>\\\\]+\\.(?:mp4|m3u8|webm|m4v|mov|mkv|ts)(?:[?][^\\s\"'<>\\\\]*)?",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern TITLE = Pattern.compile("<title[^>]*>(.*?)</title>",
             Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
