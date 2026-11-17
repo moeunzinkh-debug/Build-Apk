@@ -39,15 +39,23 @@ used immediately and never persisted.
 
 ## What Xtr3 implements
 
-`SsstikResolver.java` + routing in `MediaResolver.java`:
+`TikwmResolver.java` + `SsstikResolver.java` + routing in `MediaResolver.java`:
 
-- Short-drama URLs skip the engine entirely and go straight to the fallback.
-- Any other TikTok link tries the bundled engine first; the fallback runs only
-  if the engine fails, and only while the toggle is on.
-- One retry on `ssstokenfail` (fresh shell + token) and one on `ssslimitexceed`
-  after a ~12 s cooldown; requests are paced ≥1.5 s apart.
-- Every decoded URL is re-checked against a host allow-list (SSSTik wrappers plus
-  the regional TikTok/ByteDance CDNs) and must be HTTPS with no userinfo.
+- Short-drama URLs skip the bundled engine and enter the fallback chain directly.
+- Any other TikTok link tries the bundled yt-dlp engine first; the fallback chain runs only
+  if the engine fails, and only for resolvers enabled in **Developer options**.
+- **TikWM (`https://www.tikwm.com/api/?url=<post>&hd=1`)** runs first when enabled:
+  - Single JSON request (paced ≥1.5 s apart, with one cooldown retry on 1 req/s rate limit).
+  - Resolves relative `/video/media/...` and absolute CDN links into HTTPS URLs, deduplicates
+    identical URLs, and exposes distinct `hdplay` (HD, no watermark), `play` (Standard, no watermark),
+    and `wmplay` (Watermarked) MP4 streams with reported sizes in the pre-download quality picker.
+  - Detects photo/slide carousels (`images` array) and audio-only posts before any download starts.
+- **SSSTik (`SsstikResolver`)** runs automatically if TikWM is disabled or fails (other than a
+  confirmed photo carousel):
+  - One retry on `ssstokenfail` (fresh shell + token) and one on `ssslimitexceed`
+    after a ~12 s cooldown; requests are paced ≥1.5 s apart.
+- Every candidate URL in both resolvers is checked against an HTTPS host allow-list (resolver
+  origin/wrappers plus regional TikTok/ByteDance CDNs) with no userinfo.
 - Verdicts map to localized messages, so a photo carousel, audio-only post or
   watermarked-only post says so instead of failing generically.
 

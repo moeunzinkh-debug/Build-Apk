@@ -46,8 +46,8 @@ public final class MediaResolver {
             try {
                 return new Result(Collections.singletonList(platform.inspect(target, () -> cancelled)), false);
             } catch (IOException e) {
-                if (!SupportedSite.TIKTOK.equals(site) || !fallbackEnabled() || isCancelled(e)) throw e;
-                Diagnostics.log("TIKTOK", "Bundled engine could not read this TikTok link; trying the SSSTik fallback.");
+                if (!SupportedSite.TIKTOK.equals(site) || !anyFallbackEnabled() || isCancelled(e)) throw e;
+                Diagnostics.log("TIKTOK", "Bundled engine could not read this TikTok link; trying third-party fallback.");
                 return new Result(Collections.singletonList(viaFallback(target, e)), false);
             } finally { platform = null; }
         }
@@ -84,8 +84,16 @@ public final class MediaResolver {
         }
     }
 
-    private boolean fallbackEnabled() {
+    private boolean tikwmEnabled() {
+        return context.getSharedPreferences("settings", Context.MODE_PRIVATE).getBoolean("tikwmFallback", true);
+    }
+
+    private boolean ssstikEnabled() {
         return context.getSharedPreferences("settings", Context.MODE_PRIVATE).getBoolean("ssstikFallback", true);
+    }
+
+    private boolean anyFallbackEnabled() {
+        return tikwmEnabled() || ssstikEnabled();
     }
 
     private static boolean isCancelled(IOException e) {
@@ -94,28 +102,103 @@ public final class MediaResolver {
     }
 
     /**
-     * Resolves one public TikTok post through the SSSTik form flow when the bundled engine
-     * cannot read it. The returned candidate is an ordinary direct MP4 on a TikTok CDN.
+     * Resolves one public TikTok post through TikWM (JSON + HD/standard qualities) and falls back
+     * to SSSTik when the bundled engine cannot read the link.
      */
     private MediaCandidate viaFallback(String url, IOException cause) throws IOException {
-        if (!fallbackEnabled()) {
+        boolean useTikwm = tikwmEnabled();
+        boolean useSsstik = ssstikEnabled();
+        if (!useTikwm && !useSsstik) {
             if (cause != null) throw cause;
             throw new IOException("unsupported");
         }
-        SsstikResolver.Result resolved;
-        try {
-            resolved = SsstikResolver.resolve(url, () -> cancelled);
-        } catch (IOException e) {
-            // Keep the engine's more specific diagnosis when the fallback learned nothing new.
-            if (cause != null && ("generic".equals(e.getMessage()) || "network".equals(e.getMessage()))) throw cause;
-            throw e;
+        IOException tikwmError = null;
+        if (useTikwm) {
+            try {
+                return fromTikwm(url, TikwmResolver.resolve(url, () -> cancelled));
+            } catch (IOException e) {
+                if (isCancelled(e)) throw e;
+                // A confirmed photo carousel has no single video file in any resolver.
+                if ("slides".equals(e.getMessage())) throw e;
+                tikwmError = e;
+                if (useSsstik) {
+                    Diagnostics.log("TIKTOK", "TikWM fallback did not resolve (" + e.getMessage() + "); trying SSSTik.");
+                }
+            }
         }
+        if (useSsstik) {
+            try {
+                return fromSsstik(url, SsstikResolver.resolve(url, () -> cancelled));
+            } catch (IOException e) {
+                if (isCancelled(e)) throw e;
+                throw chooseFailure(cause, tikwmError, e);
+            }
+        }
+        throw chooseFailure(cause, tikwmError, null);
+    }
+
+    private static MediaCandidate fromTikwm(String pageUrl, TikwmResolver.Result resolved) {
         String title = resolved.title == null || resolved.title.isEmpty() ? "TikTok video" : resolved.title;
-        MediaCandidate candidate = new MediaCandidate(resolved.url, url, title, MediaCandidate.DIRECT);
+        MediaCandidate candidate = new MediaCandidate(resolved.url, pageUrl, title, MediaCandidate.DIRECT);
+        candidate.mime = "video/mp4";
+        candidate.site = SupportedSite.TIKTOK;
+        candidate.platformNote = "TikWM";
+        candidate.size = resolved.size;
+        if (resolved.qualities != null && !resolved.qualities.isEmpty()) {
+            candidate.qualities = new java.util.ArrayList<>(resolved.qualities);
+            candidate.selectQuality(candidate.qualities.get(0));
+        }
+        return candidate;
+    }
+
+    private static MediaCandidate fromSsstik(String pageUrl, SsstikResolver.Result resolved) {
+        String title = resolved.title == null || resolved.title.isEmpty() ? "TikTok video" : resolved.title;
+        MediaCandidate candidate = new MediaCandidate(resolved.url, pageUrl, title, MediaCandidate.DIRECT);
         candidate.mime = "video/mp4";
         candidate.site = SupportedSite.TIKTOK;
         candidate.platformNote = "SSSTik";
         return candidate;
+    }
+
+    static IOException chooseFailure(IOException engineCause, IOException tikwmError, IOException ssstikError) {
+        IOException best = null;
+        int bestRank = -1;
+        for (IOException candidate : new IOException[]{engineCause, tikwmError, ssstikError}) {
+            if (candidate == null) continue;
+            int rank = failureRank(candidate.getMessage());
+            if (rank >= bestRank) {
+                best = candidate;
+                bestRank = rank;
+            }
+        }
+        return best != null ? best : new IOException("generic");
+    }
+
+    static int failureRank(String category) {
+        if (category == null) return 0;
+        switch (category) {
+            case "slides":
+            case "audio":
+            case "watermark":
+            case "paid":
+            case "login":
+            case "protected":
+            case "live":
+                return 5;
+            case "unavailable":
+                return 4;
+            case "rate":
+            case "forbidden":
+            case "challenge":
+                return 3;
+            case "unsupported":
+                return 2;
+            case "network":
+            case "generic":
+                return 1;
+            default:
+                return 1;
+        }
     }
 
     /** Public share shorteners redirect to the real watch page; keep the original URL if expansion fails. */

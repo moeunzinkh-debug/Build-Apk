@@ -141,4 +141,14 @@ public class LinkParserTest {
         assertEquals(1, list.size());
         assertEquals("https://cdn.test/movie.mp4", list.get(0).url);
     }
+    @Test public void extractsInlineScriptVariableAssignmentsWithoutIframeHtmlFalsePositives() {
+        List<MediaCandidate> list = LinkParser.extract(
+                "<script>var videoUrl = '/vod/35835513/index.m3u8'; let playUrl = \"https://cdn.test/ep1.mkv\";</script>"
+                + "<iframe src='https://xstree.com/player/embed.html'></iframe>", PAGE);
+        assertEquals(2, list.size());
+        assertEquals("https://xstree.com/vod/35835513/index.m3u8", list.get(0).url);
+        assertEquals(MediaCandidate.HLS, list.get(0).kind);
+        assertEquals("https://cdn.test/ep1.mkv", list.get(1).url);
+        assertEquals(MediaCandidate.DIRECT, list.get(1).kind);
+    }
 }

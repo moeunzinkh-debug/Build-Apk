@@ -9,8 +9,10 @@
     </LinearLayout>
     <Switch android:id="@+id/developer_switch" android:layout_width="match_parent" android:layout_height="wrap_content"
         android:layout_marginTop="12dp" android:text="@string/developer_switch" android:textColor="@color/text" android:textSize="15sp" />
+    <Switch android:id="@+id/developer_tikwm" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="10dp" android:text="@string/developer_tikwm_switch" android:textColor="@color/text" android:textSize="15sp" />
     <Switch android:id="@+id/developer_ssstik" android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_marginTop="10dp" android:text="@string/developer_ssstik_switch" android:textColor="@color/text" android:textSize="15sp" />
+        android:layout_marginTop="8dp" android:text="@string/developer_ssstik_switch" android:textColor="@color/text" android:textSize="15sp" />
     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp"
         android:text="@string/developer_ssstik_hint" style="@style/Text.Xtr3.Body" android:textSize="11sp" />
     <TextView android:id="@+id/developer_status" android:layout_width="match_parent" android:layout_height="wrap_content"

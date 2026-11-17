@@ -17,7 +17,7 @@ public final class DeveloperActivity extends Activity {
     private final Handler main = new Handler(Looper.getMainLooper());
     private TextView logView, statusView;
     private ScrollView scroll;
-    private Switch toggle, ssstikToggle;
+    private Switch toggle, tikwmToggle, ssstikToggle;
     private String url;
     private final Runnable refresh = new Runnable() {
         @Override public void run() { renderLog(); main.postDelayed(this, 1000); }
@@ -39,6 +39,12 @@ public final class DeveloperActivity extends Activity {
             Diagnostics.setEnabled(this, checked);
             updateStatus();
             if (checked) Ui.toast(this, R.string.developer_enabled_toast);
+        });
+        tikwmToggle = findViewById(R.id.developer_tikwm);
+        tikwmToggle.setChecked(getSharedPreferences("settings", MODE_PRIVATE).getBoolean("tikwmFallback", true));
+        tikwmToggle.setOnCheckedChangeListener((button, checked) -> {
+            getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("tikwmFallback", checked).apply();
+            Diagnostics.log("TIKTOK", "TikWM fallback " + (checked ? "enabled" : "disabled"));
         });
         ssstikToggle = findViewById(R.id.developer_ssstik);
         ssstikToggle.setChecked(getSharedPreferences("settings", MODE_PRIVATE).getBoolean("ssstikFallback", true));

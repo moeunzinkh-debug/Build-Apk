@@ -209,11 +209,15 @@ public final class MainActivity extends Activity {
         card.addView(Ui.text(this, c.title == null ? getString(R.string.app_name) : c.title, 17, true));
         TextView meta = Ui.text(this, getString(R.string.metadata_size, format(c), sizeLabel(c)), 13, false);
         card.addView(meta);
+        TextView host = Ui.text(this, LinkParser.host(c.url), 12, false);
+        host.setSingleLine(true);
+        host.setEllipsize(TextUtils.TruncateAt.END);
         if (c.qualities != null && c.qualities.size() > 1) {
             Button quality = Ui.button(this, getString(R.string.choose_quality, qualityLabel(c)), false);
             quality.setOnClickListener(v -> showQualityPicker(c, () -> {
                 meta.setText(getString(R.string.metadata_size, format(c), sizeLabel(c)));
                 quality.setText(getString(R.string.choose_quality, qualityLabel(c)));
+                host.setText(LinkParser.host(c.url));
             }));
             card.addView(quality);
         }
@@ -221,11 +225,9 @@ public final class MainActivity extends Activity {
             card.addView(Ui.text(this, getString(R.string.platform_hint, SupportedSite.label(c.url)), 12, false));
         }
         if (c.platformNote != null && !c.platformNote.isEmpty() && !MediaCandidate.PLATFORM.equals(c.kind)) {
-            card.addView(Ui.text(this, getString(R.string.ssstik_note), 12, false));
+            int noteRes = "TikWM".equals(c.platformNote) ? R.string.tikwm_note : R.string.ssstik_note;
+            card.addView(Ui.text(this, getString(noteRes), 12, false));
         }
-        TextView host = Ui.text(this, LinkParser.host(c.url), 12, false);
-        host.setSingleLine(true);
-        host.setEllipsize(TextUtils.TruncateAt.END);
         card.addView(host);
         Button download = Ui.button(this, getString(R.string.download), true);
         download.setOnClickListener(v -> {
@@ -277,6 +279,13 @@ public final class MainActivity extends Activity {
             return quality.equals(getString(R.string.format_platform)) || quality.equals("Best available")
                     ? getString(R.string.format_hls) : "HLS · " + quality;
         }
+        String base = directFormat(c);
+        if (c.qualities != null && !c.qualities.isEmpty() && c.quality != null && !c.quality.isEmpty()) {
+            return base + " · " + c.quality;
+        }
+        return base;
+    }
+    private String directFormat(MediaCandidate c) {
         String path = LinkParser.path(c.url);
         int dot = path.lastIndexOf('.');
         if (dot >= 0 && path.length() - dot <= 6) return path.substring(dot + 1).toUpperCase(Locale.ROOT);
