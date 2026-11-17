@@ -1,18 +1,21 @@
-# Only the WebView bridge is called by name from JavaScript.
--keepclassmembers class com.xtr3.downloader.BrowserActivity$MediaBridge {
-    @android.webkit.JavascriptInterface public *;
-}
--keepattributes JavascriptInterface
--dontwarn org.jetbrains.annotations.**
+# Add project specific ProGuard rules here.
+# You can control the set of applied configuration files using the
+# proguardFiles setting in build.gradle.
+#
+# For more details, see
+#   http://developer.android.com/guide/developing/tools/proguard.html
 
-# Cronet loads its embedded provider/native bridge reflectively.
--keep class org.chromium.net.** { *; }
--dontwarn org.chromium.**
+# If your project uses WebView with JS, uncomment the following
+# and specify the fully qualified class name to the JavaScript interface
+# class:
+#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
+#   public *;
+#}
 
-# youtubedl-android initializes bundled Python/FFmpeg/QuickJS and maps JSON reflectively.
--keep class com.yausername.** { *; }
--keep class com.fasterxml.jackson.** { *; }
--keep class org.apache.commons.compress.archivers.zip.** { *; }
--dontwarn com.yausername.**
--dontwarn org.apache.commons.compress.**
--dontwarn com.fasterxml.jackson.**
+# Uncomment this to preserve the line number information for
+# debugging stack traces.
+#-keepattributes SourceFile,LineNumberTable
+
+# If you keep the line number information, uncomment this to
+# hide the original source file name.
+#-renamesourcefileattribute SourceFile
