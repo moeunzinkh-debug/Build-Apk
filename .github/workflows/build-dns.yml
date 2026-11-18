@@ -35,6 +35,21 @@ jobs:
         with:
           packages: 'platforms;android-36 build-tools;36.0.0 platform-tools'
 
+      - name: Debug environment
+        shell: bash
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          echo "JAVA_HOME=$JAVA_HOME"
+          java -version
+          ls $ANDROID_HOME/platforms/ 2>&1 || echo "No platforms dir"
+          ls $ANDROID_HOME/build-tools/ 2>&1 || echo "No build-tools dir"
+
+      - name: Accept Android SDK licenses
+        shell: bash
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96 # v4.4.1
 
@@ -53,7 +68,7 @@ jobs:
       - name: Build release APK
         shell: bash
         run: |
-          ./gradlew --no-daemon --stacktrace --console=plain assembleRelease \
+          ./gradlew --no-daemon --stacktrace --console=plain --info assembleRelease \
             -Dorg.gradle.jvmargs="-Xmx4g"
 
       - name: Split APKs by ABI
