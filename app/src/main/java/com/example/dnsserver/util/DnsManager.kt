@@ -2,19 +2,21 @@ package com.example.dnsserver.util
 
 import android.content.ContentResolver
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
 
 class DnsManager(private val context: Context) {
 
-  private const val TAG = "DnsManager"
-
-  // Constants for Private DNS (API 28+)
-  private const val PRIVATE_DNS_MODE = "private_dns_mode"
-  private const val PRIVATE_DNS_SPECIFY = "private_dns_specify"
-  private const val MODE_OFF = 0
-  private const val MODE_SPECIFY = 1
+  companion object {
+    private const val TAG = "DnsManager"
+    private const val PRIVATE_DNS_MODE = "private_dns_mode"
+    private const val PRIVATE_DNS_SPECIFY = "private_dns_specify"
+    private const val MODE_OFF = 0
+    private const val MODE_SPECIFY = 1
+  }
 
   fun applyPrivateDns(hostname: String, callback: (success: Boolean, message: String) -> Unit) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
@@ -65,10 +67,9 @@ class DnsManager(private val context: Context) {
     return true
   }
 
-  fun getWriteSettingsIntent(): android.content.Intent {
-    return android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS.let { intent ->
-      intent.data = android.net.Uri.parse("package:${context.packageName}")
-      intent
+  fun getWriteSettingsIntent(): Intent {
+    return Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS).apply {
+      data = Uri.parse("package:${context.packageName}")
     }
   }
 }
