@@ -11,4 +11,5 @@
     <string name="dns_applied">DNS applied</string>
     <string name="dns_failed">Failed to apply DNS</string>
     <string name="permission_required">Modify system settings permission required</string>
+    <string name="dns_icon">DNS icon</string>
 </resources>

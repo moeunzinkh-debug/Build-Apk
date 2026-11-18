@@ -16,4 +16,6 @@
     <color name="cloudflare_red">#EF4444</color>
     <color name="dns_sb_purple">#8B5CF6</color>
     <color name="adguard_cyan">#0EA5E9</color>
+    <color name="dns_active">#10B981</color>
+    <color name="dns_inactive">#64748B</color>
 </resources>

@@ -1,35 +1,113 @@
 package com.example.dnsserver
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import com.example.dnsserver.ui.theme.DnsServerTheme
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import com.example.dnsserver.model.DnsProvider
+import com.example.dnsserver.util.DnsManager
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            val snackbarHostState = remember { SnackbarHostState() }
-            DnsServerTheme {
-                Scaffold(
-                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-                ) { innerPadding ->
-                    DnsListScreen(
-                        modifier = androidx.compose.ui.Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                        snackbarHostState = snackbarHostState
-                    )
-                }
-            }
+  private lateinit var dnsManager: DnsManager
+  private lateinit var providerList: ListView
+
+  private val providers = listOf(
+    DnsProvider("Google DNS", "dns.google", R.drawable.ic_dns),
+    DnsProvider("Quad9", "dns.quad9.net", R.drawable.ic_dns),
+    DnsProvider("Cloudflare", "1dot1dot1dot1.cloudflare-dns.com", R.drawable.ic_dns),
+    DnsProvider("DNS.SB", "dns.dns.sb", R.drawable.ic_dns),
+    DnsProvider("AdGuard", "dns.adguard-dns.com", R.drawable.ic_dns)
+  )
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    setContentView(R.layout.activity_main)
+
+    dnsManager = DnsManager(this)
+
+    val toolbar: Toolbar = findViewById(R.id.toolbar)
+    setSupportActionBar(toolbar)
+    supportActionBar?.title = "DNS Server"
+
+    providerList = findViewById(R.id.provider_list)
+    val adapter = DnsProviderAdapter(this, providers)
+    providerList.adapter = adapter
+
+    providerList.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+      val provider = providers[position]
+      dnsManager.applyPrivateDns(provider.hostname) { success, message ->
+        runOnUiThread {
+          Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+          if (success) {
+            adapter.notifyDataSetChanged()
+          }
         }
+      }
     }
+
+    val clearBtn: Button = findViewById(R.id.clear_dns_btn)
+    clearBtn.setOnClickListener {
+      dnsManager.clearPrivateDns { success, message ->
+        runOnUiThread {
+          Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+          if (success) {
+            adapter.notifyDataSetChanged()
+          }
+        }
+      }
+    }
+
+    updateSelectionIndicator(adapter)
+  }
+
+  private fun updateSelectionIndicator(adapter: DnsProviderAdapter) {
+    val currentDns = dnsManager.getCurrentPrivateDns()
+    for (i in providers.indices) {
+      adapter.setSelected(i, currentDns?.equals(providers[i].hostname, ignoreCase = true) == true)
+    }
+    adapter.notifyDataSetChanged()
+  }
+
+  private inner class DnsProviderAdapter(
+    context: Context,
+    private val items: List<DnsProvider>
+  ) : BaseAdapter() {
+
+    private val inflater: LayoutInflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+    private val selectedIndices = mutableSetOf<Int>()
+
+    fun setSelected(position: Int, selected: Boolean) {
+      if (selected) selectedIndices.add(position) else selectedIndices.remove(position)
+    }
+
+    override fun getCount(): Int = items.size
+
+    override fun getItem(position: Int): Any = items[position]
+
+    override fun getItemId(position: Int): Long = position.toLong()
+
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+      val view = convertView ?: inflater.inflate(R.layout.item_dns_provider, parent, false)
+      val provider = items[position]
+
+      view.findViewById<TextView>(R.id.provider_name).text = provider.name
+      view.findViewById<TextView>(R.id.provider_host).text = provider.hostname
+      val icon: ImageView = view.findViewById(R.id.provider_icon)
+      icon.setImageResource(provider.iconRes)
+
+      val statusView: TextView = view.findViewById(R.id.provider_status)
+      val isSelected = selectedIndices.contains(position)
+      statusView.text = if (isSelected) "Active" else "Inactive"
+      statusView.setTextColor(
+        if (isSelected) resources.getColor(R.color.dns_active, theme)
+        else resources.getColor(R.color.dns_inactive, theme)
+      )
+
+      return view
+    }
+  }
 }
