@@ -45,16 +45,16 @@ jobs:
             -keyalg RSA -keysize 2048 -validity 10000 \
             -storepass dns-ci-release -keypass dns-ci-release \
             -dname "CN=DNS Server CI, OU=Test, O=DNS Server, L=Phnom Penh, C=KH"
+          echo "KEYSTORE_PATH=$PWD/ci-release.keystore" >> $GITHUB_ENV
+          echo "STORE_PASSWORD=dns-ci-release" >> $GITHUB_ENV
+          echo "KEY_ALIAS=upload" >> $GITHUB_ENV
+          echo "KEY_PASSWORD=dns-ci-release" >> $GITHUB_ENV
 
       - name: Build release APK
         shell: bash
         run: |
           ./gradlew --no-daemon --stacktrace --console=plain assembleRelease \
-            -Dorg.gradle.jvmargs="-Xmx4g" \
-            -Pandroid.injected.signing.store.file="$PWD/ci-release.keystore" \
-            -Pandroid.injected.signing.store.password=dns-ci-release \
-            -Pandroid.injected.signing.key.alias=upload \
-            -Pandroid.injected.signing.key.password=dns-ci-release
+            -Dorg.gradle.jvmargs="-Xmx4g"
 
       - name: Split APKs by ABI
         shell: bash

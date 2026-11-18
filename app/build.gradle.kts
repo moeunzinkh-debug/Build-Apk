@@ -27,13 +27,11 @@ android {
       keyPassword = "android"
     }
     create("release") {
-      def storePath = providers.gradleProperty("android.injected.signing.store.file").orNull
-      if (storePath != null) {
-        storeFile = file(storePath)
-        storePassword = providers.gradleProperty("android.injected.signing.store.password").orNull
-        keyAlias = providers.gradleProperty("android.injected.signing.key.alias").orNull
-        keyPassword = providers.gradleProperty("android.injected.signing.key.password").orNull
-      }
+      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/ci-release.keystore"
+      storeFile = file(keystorePath)
+      storePassword = System.getenv("STORE_PASSWORD")
+      keyAlias = System.getenv("KEY_ALIAS") ?: "upload"
+      keyPassword = System.getenv("KEY_PASSWORD")
     }
   }
 
