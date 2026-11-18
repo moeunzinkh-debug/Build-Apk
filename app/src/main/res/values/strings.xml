@@ -1,15 +1,13 @@
 <resources>
     <string name="app_name">DNS Server</string>
-    <string name="dns_google">Google DNS</string>
-    <string name="dns_quad9">Quad9</string>
-    <string name="dns_cloudflare">Cloudflare</string>
-    <string name="dns_dns_sb">DNS.SB</string>
-    <string name="dns_adguard">AdGuard DNS</string>
+    <string name="select_dns_provider">ជ្រើសរើស DNS Server</string>
+    <string name="dns_on">ON</string>
+    <string name="dns_off">OFF</string>
+    <string name="no_dns_selected">មិនមាន DNS ដែលបានជ្រើស</string>
+    <string name="api_not_supported">Private DNS មិនអាចប្រើបាននៅលើ Android 7.1.1</string>
+    <string name="api_warning">កម្មវិធីនេះត្រូវការ Android 9 (API 28) ឬអ្នកនាំចូលដើម្បីត្រូវប្រើ Private DNS។ OPPO A83T (Android 7.1.1) មិនអាចត្រឡប់ប្រើអ្វីដែលមានន័យនៃ Private DNS។</string>
+    <string name="dns_icon">DNS icon</string>
     <string name="apply_dns">Apply DNS</string>
     <string name="clear_dns">Clear DNS</string>
-    <string name="no_provider_selected">No DNS provider selected</string>
-    <string name="dns_applied">DNS applied</string>
-    <string name="dns_failed">Failed to apply DNS</string>
     <string name="permission_required">Modify system settings permission required</string>
-    <string name="dns_icon">DNS icon</string>
 </resources>

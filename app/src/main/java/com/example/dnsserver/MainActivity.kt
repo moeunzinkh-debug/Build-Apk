@@ -1,20 +1,20 @@
 package com.example.dnsserver
 
-import android.content.Context
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import com.example.dnsserver.model.DnsProvider
 import com.example.dnsserver.util.DnsManager
 
 class MainActivity : AppCompatActivity() {
 
   private lateinit var dnsManager: DnsManager
-  private lateinit var providerList: ListView
+  private lateinit var dnsSpinner: Spinner
+  private lateinit var toggleBtn: Button
+  private lateinit var statusText: TextView
+  private lateinit var currentHostText: TextView
+  private lateinit var apiWarning: TextView
 
   private val providers = listOf(
     DnsProvider("Google DNS", "dns.google", R.drawable.ic_dns),
@@ -24,93 +24,135 @@ class MainActivity : AppCompatActivity() {
     DnsProvider("AdGuard", "dns.adguard-dns.com", R.drawable.ic_dns)
   )
 
+  private var isDnsOn = false
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
 
-    dnsManager = DnsManager(this)
-
-    val toolbar: Toolbar = findViewById(R.id.toolbar)
+    val toolbar: androidx.appcompat.widget.Toolbar = findViewById(R.id.toolbar)
     setSupportActionBar(toolbar)
     supportActionBar?.title = "DNS Server"
 
-    providerList = findViewById(R.id.provider_list)
-    val adapter = DnsProviderAdapter(this, providers)
-    providerList.adapter = adapter
+    dnsManager = DnsManager(this)
 
-    providerList.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
-      val provider = providers[position]
-      dnsManager.applyPrivateDns(provider.hostname) { success, message ->
-        runOnUiThread {
-          Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
-          if (success) {
-            adapter.notifyDataSetChanged()
+    dnsSpinner = findViewById(R.id.dns_spinner)
+    toggleBtn = findViewById(R.id.toggle_dns_btn)
+    statusText = findViewById(R.id.dns_status)
+    currentHostText = findViewById(R.id.current_dns_host)
+    apiWarning = findViewById(R.id.api_warning)
+
+    // Setup Spinner (drop-down menu)
+    val spinnerAdapter = ArrayAdapter(
+      this,
+      android.R.layout.simple_spinner_item,
+      providers.map { it.name }
+    )
+    spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+    dnsSpinner.adapter = spinnerAdapter
+
+    // Check API level - Private DNS requires API 28+
+    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.P) {
+      apiWarning.visibility = View.VISIBLE
+      toggleBtn.isEnabled = false
+      statusText.text = getString(R.string.api_not_supported)
+      statusText.setTextColor(resources.getColor(R.color.dns_inactive, theme))
+    } else {
+      apiWarning.visibility = View.GONE
+      loadCurrentDnsState()
+    }
+
+    // Toggle button click
+    toggleBtn.setOnClickListener {
+      if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.P) {
+        Toast.makeText(this, R.string.api_not_supported, Toast.LENGTH_LONG).show()
+        return@setOnClickListener
+      }
+
+      val selectedPosition = dnsSpinner.selectedItemPosition
+      val selectedProvider = providers[selectedPosition]
+
+      if (!isDnsOn) {
+        // Turn ON
+        dnsManager.applyPrivateDns(selectedProvider.hostname) { success, message ->
+          runOnUiThread {
+            if (success) {
+              isDnsOn = true
+              updateUI(on = true, provider = selectedProvider)
+              Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
+            } else {
+              Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
+            }
+          }
+        }
+      } else {
+        // Turn OFF
+        dnsManager.clearPrivateDns { success, message ->
+          runOnUiThread {
+            if (success) {
+              isDnsOn = false
+              updateUI(on = false, provider = null)
+              Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
+            } else {
+              Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
+            }
           }
         }
       }
     }
 
-    val clearBtn: Button = findViewById(R.id.clear_dns_btn)
-    clearBtn.setOnClickListener {
-      dnsManager.clearPrivateDns { success, message ->
-        runOnUiThread {
-          Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
-          if (success) {
-            adapter.notifyDataSetChanged()
-          }
+    // Spinner selection change - update host display
+    dnsSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+      override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+        val provider = providers[position]
+        currentHostText.text = provider.hostname
+        if (!isDnsOn) {
+          statusText.text = getString(R.string.dns_off)
+          statusText.setTextColor(resources.getColor(R.color.dns_inactive, theme))
         }
       }
-    }
 
-    updateSelectionIndicator(adapter)
+      override fun onNothingSelected(parent: AdapterView<*>) {}
+    }
   }
 
-  private fun updateSelectionIndicator(adapter: DnsProviderAdapter) {
+  private fun loadCurrentDnsState() {
     val currentDns = dnsManager.getCurrentPrivateDns()
-    for (i in providers.indices) {
-      adapter.setSelected(i, currentDns?.equals(providers[i].hostname, ignoreCase = true) == true)
+    if (currentDns != null && currentDns.isNotEmpty()) {
+      isDnsOn = true
+      // Find matching provider
+      var matchedIndex = 0
+      for (i in providers.indices) {
+        if (providers[i].hostname.equals(currentDns, ignoreCase = true)) {
+          matchedIndex = i
+          break
+        }
+      }
+      dnsSpinner.setSelection(matchedIndex)
+      updateUI(on = true, provider = providers[matchedIndex])
+    } else {
+      isDnsOn = false
+      updateUI(on = false, provider = null)
     }
-    adapter.notifyDataSetChanged()
   }
 
-  private inner class DnsProviderAdapter(
-    private val context: Context,
-    private val items: List<DnsProvider>
-  ) : BaseAdapter() {
+  private fun updateUI(on: Boolean, provider: DnsProvider?) {
+    isDnsOn = on
 
-    private val inflater: LayoutInflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-    private val selectedIndices = mutableSetOf<Int>()
-
-    fun setSelected(position: Int, selected: Boolean) {
-      if (selected) selectedIndices.add(position) else selectedIndices.remove(position)
-    }
-
-    override fun getCount(): Int = items.size
-
-    override fun getItem(position: Int): Any = items[position]
-
-    override fun getItemId(position: Int): Long = position.toLong()
-
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-      val view = convertView ?: inflater.inflate(R.layout.item_dns_provider, parent, false)
-      val provider = items[position]
-
-      view.findViewById<TextView>(R.id.provider_name).text = provider.name
-      view.findViewById<TextView>(R.id.provider_host).text = provider.hostname
-      val icon: ImageView = view.findViewById(R.id.provider_icon)
-      icon.setImageResource(provider.iconRes)
-
-      val statusView: TextView = view.findViewById(R.id.provider_status)
-      val isSelected = selectedIndices.contains(position)
-      statusView.text = if (isSelected) "Active" else "Inactive"
-      statusView.setTextColor(
-        if (isSelected)
-          context.resources.getColor(R.color.dns_active, context.theme)
-        else
-          context.resources.getColor(R.color.dns_inactive, context.theme)
-      )
-
-      return view
+    if (on) {
+      toggleBtn.setText(R.string.dns_on)
+      statusText.text = getString(R.string.dns_on)
+      statusText.setTextColor(resources.getColor(R.color.dns_active, theme))
+      toggleBtn.isEnabled = true
+      currentHostText.text = provider?.hostname ?: ""
+      currentHostText.setTextColor(resources.getColor(R.color.text_primary, theme))
+    } else {
+      toggleBtn.setText(R.string.dns_off)
+      statusText.text = getString(R.string.dns_off)
+      statusText.setTextColor(resources.getColor(R.color.dns_inactive, theme))
+      toggleBtn.isEnabled = true
+      currentHostText.text = getString(R.string.no_dns_selected)
+      currentHostText.setTextColor(resources.getColor(R.color.text_muted, theme))
     }
   }
 }

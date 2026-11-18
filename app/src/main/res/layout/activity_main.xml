@@ -3,34 +3,104 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/background"
     android:orientation="vertical">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
+        android:background="@color/primary"
         app:titleTextColor="@android:color/white" />
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp">
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
-        <Button
-            android:id="@+id/clear_dns_btn"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Clear DNS" />
-    </LinearLayout>
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="24dp">
 
-    <ListView
-        android:id="@+id/provider_list"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:divider="@android:color/darker_gray"
-        android:dividerHeight="1dp" />
+            <!-- DNS Provider Drop-down -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingBottom="32dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="@string/select_dns_provider"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="16sp" />
+
+                <Spinner
+                    android:id="@+id/dns_spinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:dropDownWidth="match_parent"
+                    android:padding="16dp"
+                    android:popupBackground="@drawable/spinner_dropdown_bg"
+                    android:spinnerMode="dropdown" />
+            </LinearLayout>
+
+            <!-- Status -->
+            <TextView
+                android:id="@+id/dns_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:fontFamily="sans-serif-medium"
+                android:text="@string/dns_off"
+                android:textColor="@color/dns_inactive"
+                android:textSize="18sp" />
+
+            <!-- Center ON/OFF Toggle Button -->
+            <Button
+                android:id="@+id/toggle_dns_btn"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:layout_marginBottom="32dp"
+                android:background="@drawable/toggle_button_bg"
+                android:fontFamily="sans-serif-medium"
+                android:text="@string/dns_off"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <!-- Current DNS Host -->
+            <TextView
+                android:id="@+id/current_dns_host"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="32dp"
+                android:fontFamily="sans-serif"
+                android:text="@string/no_dns_selected"
+                android:textColor="@color/text_muted"
+                android:textSize="14sp" />
+
+            <!-- API Warning (for Android < 9) -->
+            <TextView
+                android:id="@+id/api_warning"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/warning_bg"
+                android:padding="16dp"
+                android:visibility="gone"
+                android:fontFamily="sans-serif"
+                android:text="@string/api_warning"
+                android:textColor="@color/warning_text"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+    </ScrollView>
 
 </LinearLayout>
