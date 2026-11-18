@@ -64,15 +64,6 @@ kotlin {
   jvmToolchain(11)
 }
 
-configurations.all {
-  resolutionStrategy {
-    force("org.jetbrains.kotlin:kotlin-stdlib:1.7.20")
-    force("org.jetbrains.kotlin:kotlin-stdlib-common:1.7.20")
-    force("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.20")
-    force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20")
-  }
-}
-
 dependencies {
   implementation(platform(libs.androidx.compose.bom))
   implementation(libs.androidx.activity.compose)
