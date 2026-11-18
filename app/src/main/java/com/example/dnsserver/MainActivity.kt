@@ -1,5 +1,6 @@
 package com.example.dnsserver
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -41,7 +42,7 @@ class MainActivity : AppCompatActivity() {
       val provider = providers[position]
       dnsManager.applyPrivateDns(provider.hostname) { success, message ->
         runOnUiThread {
-          Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+          Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
           if (success) {
             adapter.notifyDataSetChanged()
           }
@@ -53,7 +54,7 @@ class MainActivity : AppCompatActivity() {
     clearBtn.setOnClickListener {
       dnsManager.clearPrivateDns { success, message ->
         runOnUiThread {
-          Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+          Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
           if (success) {
             adapter.notifyDataSetChanged()
           }
@@ -73,7 +74,7 @@ class MainActivity : AppCompatActivity() {
   }
 
   private inner class DnsProviderAdapter(
-    context: Context,
+    private val context: Context,
     private val items: List<DnsProvider>
   ) : BaseAdapter() {
 
@@ -88,7 +89,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun getItem(position: Int): Any = items[position]
 
-    override fun getItemId(position: Int): Long = position.toLong()
+    override fun getItemId(position: Long): Long = position
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
       val view = convertView ?: inflater.inflate(R.layout.item_dns_provider, parent, false)
@@ -103,8 +104,10 @@ class MainActivity : AppCompatActivity() {
       val isSelected = selectedIndices.contains(position)
       statusView.text = if (isSelected) "Active" else "Inactive"
       statusView.setTextColor(
-        if (isSelected) resources.getColor(R.color.dns_active, theme)
-        else resources.getColor(R.color.dns_inactive, theme)
+        if (isSelected)
+          context.resources.getColor(R.color.dns_active, context.theme)
+        else
+          context.resources.getColor(R.color.dns_inactive, context.theme)
       )
 
       return view
