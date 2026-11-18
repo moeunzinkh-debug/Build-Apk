@@ -161,7 +161,7 @@ fun PowerConnectButton(
           )
           .clickable(
             interactionSource = interactionSource,
-            indication = ripple(defaultColor = ringColor),
+            indication = ripple(color = ringColor),
             role = Role.Button,
             onClick = onClick,
           )
