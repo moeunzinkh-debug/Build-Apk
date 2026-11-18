@@ -4,36 +4,36 @@ plugins {
 }
 
 android {
-  namespace = "com.example.dnsserver"
+  namespace = "com.example"
   compileSdk = 36
 
   defaultConfig {
-    applicationId = "com.example.dnsserver"
+    applicationId = "com.aistudio.dnsserver.khqrxm"
     minSdk = 24
     targetSdk = 36
     versionCode = 1
     versionName = "1.0"
-    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
   signingConfigs {
+    create("release") {
+      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
+      storeFile = file(keystorePath)
+      storePassword = System.getenv("STORE_PASSWORD")
+      keyAlias = "upload"
+      keyPassword = System.getenv("KEY_PASSWORD")
+    }
     create("debugConfig") {
-      storeFile = file("${rootProject.projectDir}/debug.keystore")
+      storeFile = file("${rootDir}/debug.keystore")
       storePassword = "android"
       keyAlias = "androiddebugkey"
       keyPassword = "android"
-    }
-    create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/ci-release.keystore"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD")
-      keyAlias = System.getenv("KEY_ALIAS") ?: "upload"
-      keyPassword = System.getenv("KEY_PASSWORD")
     }
   }
 
   buildTypes {
     release {
+      isCrunchPngs = false
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       signingConfig = signingConfigs.getByName("release")
@@ -48,19 +48,35 @@ android {
     targetCompatibility = JavaVersion.VERSION_11
   }
 
-  kotlinOptions {
-    jvmTarget = "11"
+  buildFeatures {
+    compose = true
+    buildConfig = true
   }
 
-  buildFeatures {
-    buildConfig = true
+  packaging {
+    resources {
+      excludes += "/META-INF/{AL2.0,LGPL2.1}"
+    }
   }
 }
 
+kotlin {
+  jvmToolchain(11)
+}
+
 dependencies {
+  implementation(platform(libs.androidx.compose.bom))
+  implementation(libs.androidx.activity.compose)
+  implementation(libs.androidx.compose.material.icons.core)
+  implementation(libs.androidx.compose.material.icons.extended)
+  implementation(libs.androidx.compose.material3)
+  implementation(libs.androidx.compose.ui)
+  implementation(libs.androidx.compose.ui.graphics)
+  implementation(libs.androidx.datastore.preferences)
   implementation(libs.androidx.core.ktx)
-  implementation(libs.androidx.appcompat)
-  implementation(libs.androidx.constraintlayout)
+  implementation(libs.androidx.lifecycle.runtime.compose)
   implementation(libs.androidx.lifecycle.runtime.ktx)
-  implementation(libs.androidx.lifecycle.viewmodel.ktx)
+  implementation(libs.androidx.lifecycle.viewmodel.compose)
+  implementation(libs.kotlinx.coroutines.android)
+  implementation(libs.kotlinx.coroutines.core)
 }
