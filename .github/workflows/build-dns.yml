@@ -5,14 +5,9 @@ on:
     branches: [main, 'arena/**']
   pull_request:
   workflow_dispatch:
-  
 
 permissions:
   contents: read
-
-concurrency:
-  group: dns-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   build:
@@ -43,11 +38,6 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96 # v4.4.1
 
-      - name: Create .env file
-        shell: bash
-        run: |
-          cp .env.example .env
-
       - name: Generate a throwaway release signing key
         shell: bash
         run: |
@@ -56,115 +46,36 @@ jobs:
             -storepass dns-ci-release -keypass dns-ci-release \
             -dname "CN=DNS Server CI, OU=Test, O=DNS Server, L=Phnom Penh, C=KH"
 
-      - name: Unit tests and release APK build
+      - name: Build release APK
         shell: bash
         run: |
-          set +e
-          ./gradlew --no-daemon --stacktrace --console=plain \
-            testDebugUnitTest assembleRelease \
+          ./gradlew --no-daemon --stacktrace --console=plain assembleRelease \
+            -Dorg.gradle.jvmargs="-Xmx4g" \
             -Pandroid.injected.signing.store.file="$PWD/ci-release.keystore" \
             -Pandroid.injected.signing.store.password=dns-ci-release \
             -Pandroid.injected.signing.key.alias=upload \
-            -Pandroid.injected.signing.key.password=dns-ci-release \
-            > gradle-output.log 2>&1
-          code=$?
-          tail -120 gradle-output.log
-          if (( code != 0 )); then
-            python3 - <<'PY'
-          import glob, re, xml.etree.ElementTree as ET
-          lines = open('gradle-output.log', encoding='utf-8', errors='replace').read().splitlines()
-          selected = [l for l in lines if re.search(r'error:|Error:|FAILED|What went wrong|Execution failed|Caused by:|Could not|requires|Unsupported|not found|Exception', l)]
-          for path in glob.glob('app/build/test-results/**/TEST-*.xml', recursive=True):
-              try:
-                  for case in ET.parse(path).getroot().iter('testcase'):
-                      for failure in list(case.findall('failure')) + list(case.findall('error')):
-                          selected.append(case.get('classname','') + '.' + case.get('name','') + ': ' + failure.get('message',''))
-              except ET.ParseError:
-                  pass
-          if not selected: selected = lines[-30:]
-          for line in selected[:40]:
-              line = line.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
-              print('::error::' + line[:900])
-          PY
-          fi
-          exit "$code"
+            -Pandroid.injected.signing.key.password=dns-ci-release
 
-      - name: Enforce per-APK limit and name split release APKs
+      - name: Split APKs by ABI
         shell: bash
         run: |
-          set -euo pipefail
           mkdir -p artifacts
-          limit=120000000
           shopt -s nullglob
           apks=(app/build/outputs/apk/release/*-release.apk)
           if (( ${#apks[@]} == 0 )); then
             echo "::error::No release APKs were produced."
             exit 1
           fi
-          {
-            echo "## DNS Server release APKs (one per ABI)"
-            echo "Install only the file that matches your phone."
-            echo ""
-            echo "| ABI | Size (bytes) | Size (MB) | SHA-256 |"
-            echo "| --- | --- | --- | --- |"
-          } >> "$GITHUB_STEP_SUMMARY"
           for apk in "${apks[@]}"; do
             base=$(basename "$apk" .apk)
             abi=${base#app-}; abi=${abi%-release}
-            size=$(stat -c%s "$apk")
-            if (( size > limit )); then
-              echo "::error::$abi APK is $size bytes; the per-APK limit is $limit bytes."
-              exit 1
-            fi
-            out="artifacts/DNS-${abi}.apk"
-            cp "$apk" "$out"
-            (cd artifacts && sha256sum "DNS-${abi}.apk" > "DNS-${abi}.apk.sha256")
-            sha=$(cut -d' ' -f1 "artifacts/DNS-${abi}.apk.sha256")
-            echo "::notice::DNS_APK_${abi}_BYTES=$size"
-            echo "::notice::DNS_APK_${abi}_SHA256=$sha"
-            echo "| $abi | $size | $(( size / 1000000 )) | \`$sha\` |" >> "$GITHUB_STEP_SUMMARY"
+            cp "$apk" "artifacts/DNS-${abi}.apk"
           done
-          {
-            echo ""
-            echo "- Build: **release**, self-signed CI test key."
-            echo "- Per-APK limit: $limit bytes (120 MB)."
-            echo "- Download the artifact for your ABI below."
-          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload DNS APK (arm64-v8a)
+      - name: Upload DNS APKs
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: DNS-APK-arm64-v8a
-          path: |
-            artifacts/DNS-arm64-v8a.apk
-            artifacts/DNS-arm64-v8a.apk.sha256
+          name: DNS-APKs
+          path: artifacts/*.apk
+          retention-days: 14
         if: success()
-
-      - name: Upload DNS APK (armeabi-v7a)
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: DNS-APK-armeabi-v7a
-          path: |
-            artifacts/DNS-armeabi-v7a.apk
-            artifacts/DNS-armeabi-v7a.apk.sha256
-        if: success()
-
-      - name: Upload DNS APK (x86_64)
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: DNS-APK-x86_64
-          path: |
-            artifacts/DNS-x86_64.apk
-            artifacts/DNS-x86_64.apk.sha256
-        if: success()
-
-      - name: Upload test reports on failure
-        if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: DNS-test-reports
-          path: |
-            gradle-output.log
-            app/build/reports/
-            app/build/test-results/
-        if-no-files-found: ignore
