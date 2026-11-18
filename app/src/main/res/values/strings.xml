@@ -14,4 +14,6 @@
     <string name="settings">Settings</string>
     <string name="dns_status">DNS Status</string>
     <string name="permission_required">Modify system settings permission required</string>
+    <string name="grant_permission_to_use">សូមអានុញ្ញាតអានុវត្តការសម្រួលដើម្បីប្រើអេក្រង់នេះ</string>
+    <string name="write_settings_permission_needed">ត្រូវអានុញ្ញាតការសម្រួល WRITE_SETTINGS ដើម្បីធ្វើឲ្យ DNS ដំណើរការ</string>
 </resources>

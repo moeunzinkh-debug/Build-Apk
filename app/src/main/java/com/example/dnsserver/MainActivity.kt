@@ -1,6 +1,9 @@
 package com.example.dnsserver
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -17,6 +20,8 @@ class MainActivity : AppCompatActivity() {
   private lateinit var subtitleText: TextView
   private lateinit var statusIcon: ImageView
   private lateinit var apiWarning: TextView
+  private lateinit var settingsBtn: ImageButton
+  private lateinit var themeBtn: ImageButton
 
   private val providers = listOf(
     DnsProvider("Google DNS", "dns.google", R.drawable.ic_dns),
@@ -27,6 +32,7 @@ class MainActivity : AppCompatActivity() {
   )
 
   private var isDnsOn = false
+  private val REQUEST_WRITE_SETTINGS = 1001
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -44,6 +50,8 @@ class MainActivity : AppCompatActivity() {
     subtitleText = findViewById(R.id.dns_subtitle)
     statusIcon = findViewById(R.id.status_icon)
     apiWarning = findViewById(R.id.api_warning)
+    settingsBtn = findViewById(R.id.settings_btn)
+    themeBtn = findViewById(R.id.theme_btn)
 
     // Setup Spinner (drop-down menu)
     val spinnerAdapter = ArrayAdapter(
@@ -63,7 +71,17 @@ class MainActivity : AppCompatActivity() {
       subtitleText.text = ""
     } else {
       apiWarning.visibility = View.GONE
-      loadCurrentDnsState()
+      checkWriteSettingsPermission()
+    }
+
+    // Settings button click - open write settings permission page
+    settingsBtn.setOnClickListener {
+      openWriteSettingsPage()
+    }
+
+    // Theme button click
+    themeBtn.setOnClickListener {
+      Toast.makeText(this, "Theme feature coming soon", Toast.LENGTH_SHORT).show()
     }
 
     // Toggle switch change listener
@@ -71,6 +89,13 @@ class MainActivity : AppCompatActivity() {
       if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.P) {
         Toast.makeText(this, R.string.api_not_supported, Toast.LENGTH_LONG).show()
         toggleSwitch.isChecked = false
+        return@setOnCheckedChangeListener
+      }
+
+      if (!isWriteSettingsGranted()) {
+        Toast.makeText(this, R.string.permission_required, Toast.LENGTH_LONG).show()
+        toggleSwitch.isChecked = false
+        openWriteSettingsPage()
         return@setOnCheckedChangeListener
       }
 
@@ -125,8 +150,40 @@ class MainActivity : AppCompatActivity() {
   override fun onResume() {
     super.onResume()
     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+      checkWriteSettingsPermission()
       loadCurrentDnsState()
     }
+  }
+
+  private fun checkWriteSettingsPermission() {
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+      if (!Settings.System.canWrite(this)) {
+        toggleSwitch.isEnabled = false
+        statusText.text = getString(R.string.permission_required)
+        statusText.setTextColor(resources.getColor(android.R.color.white, theme))
+        subtitleText.text = getString(R.string.grant_permission_to_use)
+        apiWarning.visibility = View.VISIBLE
+        apiWarning.text = getString(R.string.write_settings_permission_needed)
+        apiWarning.setTextColor(resources.getColor(android.R.color.white, theme))
+      } else {
+        toggleSwitch.isEnabled = true
+        apiWarning.visibility = View.GONE
+      }
+    }
+  }
+
+  private fun isWriteSettingsGranted(): Boolean {
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+      return Settings.System.canWrite(this)
+    }
+    return true
+  }
+
+  private fun openWriteSettingsPage() {
+    val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS).apply {
+      data = Uri.parse("package:${packageName}")
+    }
+    startActivity(intent)
   }
 
   private fun loadCurrentDnsState() {
