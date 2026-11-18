@@ -80,7 +80,7 @@ jobs:
         shell: bash
         run: |
           if [ -f build-output.log ]; then
-            grep -iE 'error:|FAILED|What went wrong|Execution failed|Caused by:|Could not|Exception|A problem occurred' build-output.log | head -20 | while read line; do
+            grep -iE 'error:|FAILED|What went wrong|Execution failed|Caused by:|Could not|Exception|A problem occurred|^\s*e:|^\s*w:' build-output.log | head -30 | while read line; do
               echo "::error::${line:0:900}"
             done
           fi
