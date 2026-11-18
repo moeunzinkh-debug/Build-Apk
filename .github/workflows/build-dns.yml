@@ -65,8 +65,25 @@ jobs:
       - name: Build release APK
         shell: bash
         run: |
-          ./gradlew --no-daemon --stacktrace --console=plain --info assembleRelease \
-            -Dorg.gradle.jvmargs="-Xmx4g"
+          set +e
+          ./gradlew --no-daemon --stacktrace --console=plain assembleRelease \
+            -Dorg.gradle.jvmargs="-Xmx4g" \
+            > build-output.log 2>&1
+          code=$?
+          echo "::group::Gradle build output (exit code: $code)"
+          cat build-output.log
+          echo "::endgroup::"
+          exit $code
+
+      - name: Surface Gradle errors
+        if: always()
+        shell: bash
+        run: |
+          if [ -f build-output.log ]; then
+            grep -iE 'error:|FAILED|What went wrong|Execution failed|Caused by:|Could not|Exception|A problem occurred' build-output.log | head -20 | while read line; do
+              echo "::error::${line:0:900}"
+            done
+          fi
 
       - name: Split APKs by ABI
         shell: bash
