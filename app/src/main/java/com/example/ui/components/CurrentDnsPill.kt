@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -127,7 +127,7 @@ fun CurrentDnsPill(
       )
       Spacer(modifier = Modifier.width(6.dp))
       Icon(
-        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+        imageVector = Icons.Rounded.KeyboardArrowRight,
         contentDescription = stringResource(R.string.cd_open_diagnostics),
         tint = dnsColors.textSecondary,
         modifier = Modifier.size(22.dp),

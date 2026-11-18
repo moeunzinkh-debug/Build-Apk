@@ -31,7 +31,7 @@ import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -196,7 +196,7 @@ fun ProviderDiagnosticsSheet(
         }
       }
 
-      HorizontalDivider()
+      Divider()
 
       // Live DoT DNS Lookup Tool
       Text(
@@ -292,7 +292,7 @@ fun ProviderDiagnosticsSheet(
         }
       }
 
-      HorizontalDivider()
+      Divider()
 
       // Real Intercepted Query Log
       Text(

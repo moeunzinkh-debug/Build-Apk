@@ -22,7 +22,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -145,7 +145,7 @@ fun SettingsSheet(
         }
       }
 
-      HorizontalDivider()
+      Divider()
 
       // Strict DNS-over-TLS toggle
       Row(
@@ -172,7 +172,7 @@ fun SettingsSheet(
         )
       }
 
-      HorizontalDivider()
+      Divider()
 
       // Custom DNS Resolvers
       Row(
@@ -234,7 +234,7 @@ fun SettingsSheet(
         }
       }
 
-      HorizontalDivider()
+      Divider()
 
       // System Private DNS Settings Shortcut
       OutlinedButton(

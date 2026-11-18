@@ -26,7 +26,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -155,7 +155,7 @@ fun ProviderSelectionCard(
         exit = shrinkVertically(),
       ) {
         Column(modifier = Modifier.fillMaxWidth().padding(top = 14.dp)) {
-          HorizontalDivider(color = dnsColors.glassCardBorder.copy(alpha = 0.45f))
+          Divider(color = dnsColors.glassCardBorder.copy(alpha = 0.45f))
           Spacer(modifier = Modifier.height(10.dp))
 
           Row(
