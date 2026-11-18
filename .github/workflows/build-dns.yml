@@ -80,9 +80,13 @@ jobs:
         shell: bash
         run: |
           if [ -f build-output.log ]; then
-            grep -iE 'error:|FAILED|What went wrong|Execution failed|Caused by:|Could not|Exception|A problem occurred|^\s*e:|^\s*w:' build-output.log | head -30 | while read line; do
+            grep -iE 'error|FAILED|What went wrong|Execution failed|Caused by:|Could not|Exception|problem occurred|^\s*e:|^\s*w:|unresolved|cannot find|cannot access|overrides nothing|not abstract' build-output.log | head -30 | while read line; do
               echo "::error::${line:0:900}"
             done
+            # Also show last 50 lines for context
+            echo "::group::Last 50 lines of build output"
+            tail -50 build-output.log
+            echo "::endgroup::"
           fi
 
       - name: Split APKs by ABI
