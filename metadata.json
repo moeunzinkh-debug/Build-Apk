@@ -1,8 +1,6 @@
 {
-  "name": "Smart DND",
-  "description": "Smart DND & Background App Killer with one-tap activation, DND automation, background process management, and RAM analytics.",
+  "name": "DNS Server",
+  "description": "DNS Server - Choose and apply DNS providers (Google, Quad9, Cloudflare, DNS.SB, AdGuard) with clean gradient UI",
   "requestFramePermissions": [],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
+  "majorCapabilities": []
 }

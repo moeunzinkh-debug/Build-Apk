@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "Smart DND"
+rootProject.name = "DNS Server"
 
 include(":app")
