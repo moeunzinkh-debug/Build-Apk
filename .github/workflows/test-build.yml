@@ -1,0 +1,11 @@
+name: Test Build
+
+on:
+  push:
+    branches: [arena/1e04c93a-build-apk]
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "Hello from test workflow"
