@@ -89,7 +89,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun getItem(position: Int): Any = items[position]
 
-    override fun getItemId(position: Long): Long = position
+    override fun getItemId(position: Int): Long = position.toLong()
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
       val view = convertView ?: inflater.inflate(R.layout.item_dns_provider, parent, false)

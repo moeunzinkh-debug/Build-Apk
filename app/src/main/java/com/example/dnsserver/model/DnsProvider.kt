@@ -1,5 +1,7 @@
 package com.example.dnsserver.model
 
+import com.example.dnsserver.R
+
 data class DnsProvider(
     val name: String,
     val hostname: String,

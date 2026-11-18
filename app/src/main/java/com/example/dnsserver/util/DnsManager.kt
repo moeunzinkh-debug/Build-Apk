@@ -10,6 +10,12 @@ class DnsManager(private val context: Context) {
 
   private const val TAG = "DnsManager"
 
+  // Constants for Private DNS (API 28+)
+  private const val PRIVATE_DNS_MODE = "private_dns_mode"
+  private const val PRIVATE_DNS_SPECIFY = "private_dns_specify"
+  private const val MODE_OFF = 0
+  private const val MODE_SPECIFY = 1
+
   fun applyPrivateDns(hostname: String, callback: (success: Boolean, message: String) -> Unit) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
       callback(false, "Private DNS not supported on this Android version")
@@ -18,16 +24,8 @@ class DnsManager(private val context: Context) {
 
     try {
       val contentResolver: ContentResolver = context.contentResolver
-      Settings.Global.putInt(
-        contentResolver,
-        Settings.Global.PRIVATE_DNS_MODE,
-        Settings.Global.PRIVATE_DNS_MODE_SPECIFY
-      )
-      Settings.Global.putString(
-        contentResolver,
-        Settings.Global.PRIVATE_DNS_SPECIFY,
-        hostname
-      )
+      Settings.Global.putInt(contentResolver, PRIVATE_DNS_MODE, MODE_SPECIFY)
+      Settings.Global.putString(contentResolver, PRIVATE_DNS_SPECIFY, hostname)
       Log.i(TAG, "Private DNS set to: $hostname")
       callback(true, "DNS set to $hostname")
     } catch (e: Exception) {
@@ -44,11 +42,7 @@ class DnsManager(private val context: Context) {
 
     try {
       val contentResolver: ContentResolver = context.contentResolver
-      Settings.Global.putInt(
-        contentResolver,
-        Settings.Global.PRIVATE_DNS_MODE,
-        Settings.Global.PRIVATE_DNS_MODE_OFF
-      )
+      Settings.Global.putInt(contentResolver, PRIVATE_DNS_MODE, MODE_OFF)
       Log.i(TAG, "Private DNS cleared")
       callback(true, "DNS cleared")
     } catch (e: Exception) {
@@ -61,10 +55,7 @@ class DnsManager(private val context: Context) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
       return null
     }
-    return Settings.Global.getString(
-      context.contentResolver,
-      Settings.Global.PRIVATE_DNS_SPECIFY
-    )
+    return Settings.Global.getString(context.contentResolver, PRIVATE_DNS_SPECIFY)
   }
 
   fun isWriteSettingsGranted(): Boolean {
